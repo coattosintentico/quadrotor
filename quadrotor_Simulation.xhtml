@@ -1,0 +1,1972 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <meta charset="utf-8" />
+    <title>Quadrotor</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous"></link>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css"></link>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js" integrity="sha384-QJHtvGhmr9XOIpI6YVutG+2QOK9T+ZnN4kzFN1RtK3zEFEIsxhlmWl5/YESvpZ13" crossorigin="anonymous"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>    <link rel="stylesheet"  type="text/css" href="_ejs_library/css/ejss.css" />
+    <script src="_ejs_library/scripts/common_script.js"></script>
+    <script src="_ejs_library/scripts/textresizedetector.js"></script>
+    <script src="_ejs_library/ejsS.v1.min.js"></script>
+<script type="text/javascript"><!--//--><![CDATA[//><!--
+/* _inputParameters: an object with different values for the model parameters */
+function quadrotor(_topFrame,_libraryPath,_codebasePath, _inputParameters) {
+  var _model = EJSS_CORE.createAnimationLMS();
+  var _view;
+  var _isPlaying = false;
+  var _isPaused = true;
+  var _isMobile = (navigator===undefined) ? false : navigator.userAgent.match(/iPhone|iPad|iPod|Android|BlackBerry|Opera Mini|IEMobile/i);
+
+var _stringProperties = {};
+  var _tools = {
+    showInputDialog : EJSS_INTERFACE.BoxPanel.showInputDialog,
+    showOkDialog : EJSS_INTERFACE.BoxPanel.showOkDialog,
+    showOkCancelDialog : EJSS_INTERFACE.BoxPanel.showOkCancelDialog,
+    downloadText: EJSS_TOOLS.File.downloadText,
+    uploadText: function(action) { EJSS_TOOLS.File.uploadText(_model,action); } 
+  };
+
+  function _play()  { _isPaused = false; _isPlaying = true;  _model.play();  }
+  function _pause() { _isPaused = true;  _isPlaying = false; _model.pause(); }
+  function _step()  { _pause();  _model.step(); }
+  function _reset() { _model.reset();  _isPaused = _model.isPaused(); _isPlaying = _model.isPlaying(); }
+  _model._play  = _play;
+  _model._pause = _pause;
+  _model._step  = _step;
+  _model._reset = _reset;
+  function _update() { _model.update(); }
+  function _initialize() { _model.initialize(); }
+  function _setFPS(_fps) { _model.setFPS(_fps); }
+  function _setDelay(_delay) { _model.setDelay(_delay); }
+  function _setStepsPerDisplay(_spd) { _model.setStepsPerDisplay(_spd); }
+  function _setUpdateView(_updateView) { _model.setUpdateView(_updateView); }
+  function _setAutoplay(_auto) { _model.setAutoplay(_auto); }
+  function _println(_message) { console.log(_message); }
+
+  function _breakAfterThisPage() { _model.setShouldBreak(true); }
+
+  function _resetSolvers() { if (_model.resetSolvers) _model.resetSolvers(); }
+
+  function _saveText(name,type,content) { if (_model.saveText) _model.saveText(name,type,content); }
+
+  function _saveState(name) { if (_model.saveState) _model.saveState(name); }
+
+  function _saveImage(name,panelname) { if (_model.saveImage) _model.saveImage(name,panelname); }
+
+  function _readState(url,type) { if (_model.readState) _model.readState(url,type); }
+
+  function _readText(url,type,varname) { if (_model.readText) _model.readText(url,type,varname); }
+
+  function _getStringProperty(propertyName) {
+    var _value = _stringProperties[propertyName];
+    if (_value===undefined) return propertyName;
+    else return _value;
+  }
+  var __pagesEnabled = [];
+  function _setPageEnabled(pageName,enabled) { __pagesEnabled[pageName] = enabled; }
+
+  var rpy; // EjsS Model.Variables.Dynamic variables.rpy
+  var vrpy; // EjsS Model.Variables.Dynamic variables.vrpy
+  var arpy; // EjsS Model.Variables.Dynamic variables.arpy
+  var t; // EjsS Model.Variables.Dynamic variables.t
+  var dt; // EjsS Model.Variables.Dynamic variables.dt
+  var xyz; // EjsS Model.Variables.Dynamic variables.xyz
+  var vxyz; // EjsS Model.Variables.Dynamic variables.vxyz
+  var axyz; // EjsS Model.Variables.Dynamic variables.axyz
+
+  var d; // EjsS Model.Variables.Drone constants.d
+  var b; // EjsS Model.Variables.Drone constants.b
+  var M; // EjsS Model.Variables.Drone constants.M
+  var Kfriction; // EjsS Model.Variables.Drone constants.Kfriction
+  var I; // EjsS Model.Variables.Drone constants.I
+  var Kthrust; // EjsS Model.Variables.Drone constants.Kthrust
+  var k; // EjsS Model.Variables.Drone constants.k
+  var g; // EjsS Model.Variables.Drone constants.g
+  var Kairdrag; // EjsS Model.Variables.Drone constants.Kairdrag
+
+  var rpyRef; // EjsS Model.Variables.Signal control.rpyRef
+  var xyzRef; // EjsS Model.Variables.Signal control.xyzRef
+  var u; // EjsS Model.Variables.Signal control.u
+  var Irpy; // EjsS Model.Variables.Signal control.Irpy
+  var KpRollPitch; // EjsS Model.Variables.Signal control.KpRollPitch
+  var KiRollPitch; // EjsS Model.Variables.Signal control.KiRollPitch
+  var KdRollPitch; // EjsS Model.Variables.Signal control.KdRollPitch
+  var KpYaw; // EjsS Model.Variables.Signal control.KpYaw
+  var KiYaw; // EjsS Model.Variables.Signal control.KiYaw
+  var KdYaw; // EjsS Model.Variables.Signal control.KdYaw
+  var KpThrottle; // EjsS Model.Variables.Signal control.KpThrottle
+  var KiThrottle; // EjsS Model.Variables.Signal control.KiThrottle
+  var KdThrottle; // EjsS Model.Variables.Signal control.KdThrottle
+  var pathZigZagX; // EjsS Model.Variables.Signal control.pathZigZagX
+  var pathZigZagY; // EjsS Model.Variables.Signal control.pathZigZagY
+  var pathZigZagZ; // EjsS Model.Variables.Signal control.pathZigZagZ
+
+  var controllerMode; // EjsS Model.Variables.Drone controllers.controllerMode
+  var yawController; // EjsS Model.Variables.Drone controllers.yawController
+  var throttleController; // EjsS Model.Variables.Drone controllers.throttleController
+  var rollController; // EjsS Model.Variables.Drone controllers.rollController
+  var pitchController; // EjsS Model.Variables.Drone controllers.pitchController
+  var radiusThresholdPathMode; // EjsS Model.Variables.Drone controllers.radiusThresholdPathMode
+  var constrainRefAngles; // EjsS Model.Variables.Drone controllers.constrainRefAngles
+  var K1auto; // EjsS Model.Variables.Drone controllers.K1auto
+  var K2auto; // EjsS Model.Variables.Drone controllers.K2auto
+  var K3auto; // EjsS Model.Variables.Drone controllers.K3auto
+
+  var rollRef; // EjsS Model.Variables.Aux variables for HTML elements.rollRef
+  var pitchRef; // EjsS Model.Variables.Aux variables for HTML elements.pitchRef
+  var yawRef; // EjsS Model.Variables.Aux variables for HTML elements.yawRef
+  var xRef; // EjsS Model.Variables.Aux variables for HTML elements.xRef
+  var yRef; // EjsS Model.Variables.Aux variables for HTML elements.yRef
+  var zRef; // EjsS Model.Variables.Aux variables for HTML elements.zRef
+  var x; // EjsS Model.Variables.Aux variables for HTML elements.x
+  var y; // EjsS Model.Variables.Aux variables for HTML elements.y
+  var z; // EjsS Model.Variables.Aux variables for HTML elements.z
+
+  var _privateOdesList;
+  var _ODEi_evolution1;
+  var userEvents1=[];
+
+  _model.getOdes = function() { return [_ODEi_evolution1]; };
+
+  _model.removeEvents = function(){
+    userEvents1=[];
+  };
+
+  function _serialize() { return _model.serialize(); }
+
+  _model._userSerialize = function() {
+    return {
+      rpy : rpy,
+      vrpy : vrpy,
+      arpy : arpy,
+      t : t,
+      dt : dt,
+      xyz : xyz,
+      vxyz : vxyz,
+      axyz : axyz,
+      d : d,
+      b : b,
+      M : M,
+      Kfriction : Kfriction,
+      I : I,
+      Kthrust : Kthrust,
+      k : k,
+      g : g,
+      Kairdrag : Kairdrag,
+      rpyRef : rpyRef,
+      xyzRef : xyzRef,
+      u : u,
+      Irpy : Irpy,
+      KpRollPitch : KpRollPitch,
+      KiRollPitch : KiRollPitch,
+      KdRollPitch : KdRollPitch,
+      KpYaw : KpYaw,
+      KiYaw : KiYaw,
+      KdYaw : KdYaw,
+      KpThrottle : KpThrottle,
+      KiThrottle : KiThrottle,
+      KdThrottle : KdThrottle,
+      pathZigZagX : pathZigZagX,
+      pathZigZagY : pathZigZagY,
+      pathZigZagZ : pathZigZagZ,
+      controllerMode : controllerMode,
+      yawController : yawController,
+      throttleController : throttleController,
+      rollController : rollController,
+      pitchController : pitchController,
+      radiusThresholdPathMode : radiusThresholdPathMode,
+      constrainRefAngles : constrainRefAngles,
+      K1auto : K1auto,
+      K2auto : K2auto,
+      K3auto : K3auto,
+      rollRef : rollRef,
+      pitchRef : pitchRef,
+      yawRef : yawRef,
+      xRef : xRef,
+      yRef : yRef,
+      zRef : zRef,
+      x : x,
+      y : y,
+      z : z
+    };
+  };
+
+  function _serializePublic() { return _model.serializePublic(); }
+
+  _model._userSerializePublic = function() {
+    return {
+      rpy : rpy,
+      vrpy : vrpy,
+      arpy : arpy,
+      t : t,
+      dt : dt,
+      xyz : xyz,
+      vxyz : vxyz,
+      axyz : axyz,
+      d : d,
+      b : b,
+      M : M,
+      Kfriction : Kfriction,
+      I : I,
+      Kthrust : Kthrust,
+      k : k,
+      g : g,
+      Kairdrag : Kairdrag,
+      rpyRef : rpyRef,
+      xyzRef : xyzRef,
+      u : u,
+      Irpy : Irpy,
+      KpRollPitch : KpRollPitch,
+      KiRollPitch : KiRollPitch,
+      KdRollPitch : KdRollPitch,
+      KpYaw : KpYaw,
+      KiYaw : KiYaw,
+      KdYaw : KdYaw,
+      KpThrottle : KpThrottle,
+      KiThrottle : KiThrottle,
+      KdThrottle : KdThrottle,
+      pathZigZagX : pathZigZagX,
+      pathZigZagY : pathZigZagY,
+      pathZigZagZ : pathZigZagZ,
+      controllerMode : controllerMode,
+      yawController : yawController,
+      throttleController : throttleController,
+      rollController : rollController,
+      pitchController : pitchController,
+      radiusThresholdPathMode : radiusThresholdPathMode,
+      constrainRefAngles : constrainRefAngles,
+      K1auto : K1auto,
+      K2auto : K2auto,
+      K3auto : K3auto,
+      rollRef : rollRef,
+      pitchRef : pitchRef,
+      yawRef : yawRef,
+      xRef : xRef,
+      yRef : yRef,
+      zRef : zRef,
+      x : x,
+      y : y,
+      z : z
+    };
+  };
+
+  _model._readParameters = function(json) {
+    if(typeof json.rpy != "undefined") rpy = json.rpy;
+    if(typeof json.vrpy != "undefined") vrpy = json.vrpy;
+    if(typeof json.arpy != "undefined") arpy = json.arpy;
+    if(typeof json.t != "undefined") t = json.t;
+    if(typeof json.dt != "undefined") dt = json.dt;
+    if(typeof json.xyz != "undefined") xyz = json.xyz;
+    if(typeof json.vxyz != "undefined") vxyz = json.vxyz;
+    if(typeof json.axyz != "undefined") axyz = json.axyz;
+    if(typeof json.d != "undefined") d = json.d;
+    if(typeof json.b != "undefined") b = json.b;
+    if(typeof json.M != "undefined") M = json.M;
+    if(typeof json.Kfriction != "undefined") Kfriction = json.Kfriction;
+    if(typeof json.I != "undefined") I = json.I;
+    if(typeof json.Kthrust != "undefined") Kthrust = json.Kthrust;
+    if(typeof json.k != "undefined") k = json.k;
+    if(typeof json.g != "undefined") g = json.g;
+    if(typeof json.Kairdrag != "undefined") Kairdrag = json.Kairdrag;
+    if(typeof json.rpyRef != "undefined") rpyRef = json.rpyRef;
+    if(typeof json.xyzRef != "undefined") xyzRef = json.xyzRef;
+    if(typeof json.u != "undefined") u = json.u;
+    if(typeof json.Irpy != "undefined") Irpy = json.Irpy;
+    if(typeof json.KpRollPitch != "undefined") KpRollPitch = json.KpRollPitch;
+    if(typeof json.KiRollPitch != "undefined") KiRollPitch = json.KiRollPitch;
+    if(typeof json.KdRollPitch != "undefined") KdRollPitch = json.KdRollPitch;
+    if(typeof json.KpYaw != "undefined") KpYaw = json.KpYaw;
+    if(typeof json.KiYaw != "undefined") KiYaw = json.KiYaw;
+    if(typeof json.KdYaw != "undefined") KdYaw = json.KdYaw;
+    if(typeof json.KpThrottle != "undefined") KpThrottle = json.KpThrottle;
+    if(typeof json.KiThrottle != "undefined") KiThrottle = json.KiThrottle;
+    if(typeof json.KdThrottle != "undefined") KdThrottle = json.KdThrottle;
+    if(typeof json.pathZigZagX != "undefined") pathZigZagX = json.pathZigZagX;
+    if(typeof json.pathZigZagY != "undefined") pathZigZagY = json.pathZigZagY;
+    if(typeof json.pathZigZagZ != "undefined") pathZigZagZ = json.pathZigZagZ;
+    if(typeof json.controllerMode != "undefined") controllerMode = json.controllerMode;
+    if(typeof json.yawController != "undefined") yawController = json.yawController;
+    if(typeof json.throttleController != "undefined") throttleController = json.throttleController;
+    if(typeof json.rollController != "undefined") rollController = json.rollController;
+    if(typeof json.pitchController != "undefined") pitchController = json.pitchController;
+    if(typeof json.radiusThresholdPathMode != "undefined") radiusThresholdPathMode = json.radiusThresholdPathMode;
+    if(typeof json.constrainRefAngles != "undefined") constrainRefAngles = json.constrainRefAngles;
+    if(typeof json.K1auto != "undefined") K1auto = json.K1auto;
+    if(typeof json.K2auto != "undefined") K2auto = json.K2auto;
+    if(typeof json.K3auto != "undefined") K3auto = json.K3auto;
+    if(typeof json.rollRef != "undefined") rollRef = json.rollRef;
+    if(typeof json.pitchRef != "undefined") pitchRef = json.pitchRef;
+    if(typeof json.yawRef != "undefined") yawRef = json.yawRef;
+    if(typeof json.xRef != "undefined") xRef = json.xRef;
+    if(typeof json.yRef != "undefined") yRef = json.yRef;
+    if(typeof json.zRef != "undefined") zRef = json.zRef;
+    if(typeof json.x != "undefined") x = json.x;
+    if(typeof json.y != "undefined") y = json.y;
+    if(typeof json.z != "undefined") z = json.z;
+  };
+
+  _model._readParametersPublic = function(json) {
+    if(typeof json.rpy != "undefined") rpy = json.rpy;
+    if(typeof json.vrpy != "undefined") vrpy = json.vrpy;
+    if(typeof json.arpy != "undefined") arpy = json.arpy;
+    if(typeof json.t != "undefined") t = json.t;
+    if(typeof json.dt != "undefined") dt = json.dt;
+    if(typeof json.xyz != "undefined") xyz = json.xyz;
+    if(typeof json.vxyz != "undefined") vxyz = json.vxyz;
+    if(typeof json.axyz != "undefined") axyz = json.axyz;
+    if(typeof json.d != "undefined") d = json.d;
+    if(typeof json.b != "undefined") b = json.b;
+    if(typeof json.M != "undefined") M = json.M;
+    if(typeof json.Kfriction != "undefined") Kfriction = json.Kfriction;
+    if(typeof json.I != "undefined") I = json.I;
+    if(typeof json.Kthrust != "undefined") Kthrust = json.Kthrust;
+    if(typeof json.k != "undefined") k = json.k;
+    if(typeof json.g != "undefined") g = json.g;
+    if(typeof json.Kairdrag != "undefined") Kairdrag = json.Kairdrag;
+    if(typeof json.rpyRef != "undefined") rpyRef = json.rpyRef;
+    if(typeof json.xyzRef != "undefined") xyzRef = json.xyzRef;
+    if(typeof json.u != "undefined") u = json.u;
+    if(typeof json.Irpy != "undefined") Irpy = json.Irpy;
+    if(typeof json.KpRollPitch != "undefined") KpRollPitch = json.KpRollPitch;
+    if(typeof json.KiRollPitch != "undefined") KiRollPitch = json.KiRollPitch;
+    if(typeof json.KdRollPitch != "undefined") KdRollPitch = json.KdRollPitch;
+    if(typeof json.KpYaw != "undefined") KpYaw = json.KpYaw;
+    if(typeof json.KiYaw != "undefined") KiYaw = json.KiYaw;
+    if(typeof json.KdYaw != "undefined") KdYaw = json.KdYaw;
+    if(typeof json.KpThrottle != "undefined") KpThrottle = json.KpThrottle;
+    if(typeof json.KiThrottle != "undefined") KiThrottle = json.KiThrottle;
+    if(typeof json.KdThrottle != "undefined") KdThrottle = json.KdThrottle;
+    if(typeof json.pathZigZagX != "undefined") pathZigZagX = json.pathZigZagX;
+    if(typeof json.pathZigZagY != "undefined") pathZigZagY = json.pathZigZagY;
+    if(typeof json.pathZigZagZ != "undefined") pathZigZagZ = json.pathZigZagZ;
+    if(typeof json.controllerMode != "undefined") controllerMode = json.controllerMode;
+    if(typeof json.yawController != "undefined") yawController = json.yawController;
+    if(typeof json.throttleController != "undefined") throttleController = json.throttleController;
+    if(typeof json.rollController != "undefined") rollController = json.rollController;
+    if(typeof json.pitchController != "undefined") pitchController = json.pitchController;
+    if(typeof json.radiusThresholdPathMode != "undefined") radiusThresholdPathMode = json.radiusThresholdPathMode;
+    if(typeof json.constrainRefAngles != "undefined") constrainRefAngles = json.constrainRefAngles;
+    if(typeof json.K1auto != "undefined") K1auto = json.K1auto;
+    if(typeof json.K2auto != "undefined") K2auto = json.K2auto;
+    if(typeof json.K3auto != "undefined") K3auto = json.K3auto;
+    if(typeof json.rollRef != "undefined") rollRef = json.rollRef;
+    if(typeof json.pitchRef != "undefined") pitchRef = json.pitchRef;
+    if(typeof json.yawRef != "undefined") yawRef = json.yawRef;
+    if(typeof json.xRef != "undefined") xRef = json.xRef;
+    if(typeof json.yRef != "undefined") yRef = json.yRef;
+    if(typeof json.zRef != "undefined") zRef = json.zRef;
+    if(typeof json.x != "undefined") x = json.x;
+    if(typeof json.y != "undefined") y = json.y;
+    if(typeof json.z != "undefined") z = json.z;
+  };
+
+  function _unserializePublic(json) { return _model.unserializePublic(json); }
+
+  _model._userUnserializePublic = function(json) {
+    _model._readParametersPublic(json);
+   _resetSolvers();
+   _model.update();
+  };
+
+  function _unserialize(json) { return _model.unserialize(json); }
+
+  _model._userUnserialize = function(json) {
+    _model._readParameters(json);
+   _resetSolvers();
+   _model.update();
+  };
+
+  _model.addToReset(function() {
+    __pagesEnabled["Velocities and acceleration"] = true;
+    __pagesEnabled["SignalControl"] = true;
+  });
+
+  _model.addToReset(function() {
+    rpy = [0, 0, 0]; // EjsS Model.Variables.Dynamic variables.rpy
+    vrpy = [0, 0, 0]; // EjsS Model.Variables.Dynamic variables.vrpy
+    arpy = [0, 0, 0]; // EjsS Model.Variables.Dynamic variables.arpy
+    t = 0; // EjsS Model.Variables.Dynamic variables.t
+    dt = 0.1; // EjsS Model.Variables.Dynamic variables.dt
+    xyz = [0, 0, 0]; // EjsS Model.Variables.Dynamic variables.xyz
+    vxyz = [0, 0, 0]; // EjsS Model.Variables.Dynamic variables.vxyz
+    axyz = [0, 0, 0]; // EjsS Model.Variables.Dynamic variables.axyz
+  });
+
+  _model.addToReset(function() {
+    d = 1; // EjsS Model.Variables.Drone constants.d
+    b = 0.5; // EjsS Model.Variables.Drone constants.b
+    M = 0.5; // EjsS Model.Variables.Drone constants.M
+    Kfriction = 0.11/2; // EjsS Model.Variables.Drone constants.Kfriction
+    I = 0.5; // EjsS Model.Variables.Drone constants.I
+    Kthrust = 0.055*I/2; // EjsS Model.Variables.Drone constants.Kthrust
+    k = 0; // EjsS Model.Variables.Drone constants.k
+    g = 9.8; // EjsS Model.Variables.Drone constants.g
+    Kairdrag = 1; // EjsS Model.Variables.Drone constants.Kairdrag
+  });
+
+  _model.addToReset(function() {
+    rpyRef = [0, 0, 0]; // EjsS Model.Variables.Signal control.rpyRef
+    xyzRef = [0, 0, 0]; // EjsS Model.Variables.Signal control.xyzRef
+    u = [0, 0, 0, 0]; // EjsS Model.Variables.Signal control.u
+    Irpy = [0, 0, 0, 0]; // EjsS Model.Variables.Signal control.Irpy
+    KpRollPitch = 32; // EjsS Model.Variables.Signal control.KpRollPitch
+    KiRollPitch = 0; // EjsS Model.Variables.Signal control.KiRollPitch
+    KdRollPitch = 16; // EjsS Model.Variables.Signal control.KdRollPitch
+    KpYaw = 35; // EjsS Model.Variables.Signal control.KpYaw
+    KiYaw = 0; // EjsS Model.Variables.Signal control.KiYaw
+    KdYaw = 15; // EjsS Model.Variables.Signal control.KdYaw
+    KpThrottle = 1; // EjsS Model.Variables.Signal control.KpThrottle
+    KiThrottle = 0; // EjsS Model.Variables.Signal control.KiThrottle
+    KdThrottle = 0.75; // EjsS Model.Variables.Signal control.KdThrottle
+    pathZigZagX = 1; // EjsS Model.Variables.Signal control.pathZigZagX
+    pathZigZagY = 3; // EjsS Model.Variables.Signal control.pathZigZagY
+    pathZigZagZ = 1; // EjsS Model.Variables.Signal control.pathZigZagZ
+  });
+
+  _model.addToReset(function() {
+    controllerMode = "manual"; // EjsS Model.Variables.Drone controllers.controllerMode
+    yawController = [false, false]; // EjsS Model.Variables.Drone controllers.yawController
+    throttleController = [false, false]; // EjsS Model.Variables.Drone controllers.throttleController
+    rollController = [false, false]; // EjsS Model.Variables.Drone controllers.rollController
+    pitchController = [false, false]; // EjsS Model.Variables.Drone controllers.pitchController
+    radiusThresholdPathMode = 0.1; // EjsS Model.Variables.Drone controllers.radiusThresholdPathMode
+    constrainRefAngles = 0.25; // EjsS Model.Variables.Drone controllers.constrainRefAngles
+    K1auto = 0.4; // EjsS Model.Variables.Drone controllers.K1auto
+    K2auto = 0.4; // EjsS Model.Variables.Drone controllers.K2auto
+    K3auto = 0.6; // EjsS Model.Variables.Drone controllers.K3auto
+  });
+
+  _model.addToReset(function() {
+    rollRef = 0; // EjsS Model.Variables.Aux variables for HTML elements.rollRef
+    pitchRef = 0; // EjsS Model.Variables.Aux variables for HTML elements.pitchRef
+    yawRef = 0; // EjsS Model.Variables.Aux variables for HTML elements.yawRef
+    xRef = 0; // EjsS Model.Variables.Aux variables for HTML elements.xRef
+    yRef = 0; // EjsS Model.Variables.Aux variables for HTML elements.yRef
+    zRef = 0; // EjsS Model.Variables.Aux variables for HTML elements.zRef
+    x = 0; // EjsS Model.Variables.Aux variables for HTML elements.x
+    y = 0; // EjsS Model.Variables.Aux variables for HTML elements.y
+    z = 0; // EjsS Model.Variables.Aux variables for HTML elements.z
+  });
+
+  if (_inputParameters) {
+    _inputParameters = _model.parseInputParameters(_inputParameters);
+    if (_inputParameters) _model.addToReset(function() { _model._readParameters(_inputParameters); });
+  }
+
+  _model.addToReset(function() {
+    _privateOdesList=[];
+    _ODEi_evolution1 = _ODE_evolution1();
+    _privateOdesList.push(_ODEi_evolution1);
+  });
+
+  _model.addToReset(function() {
+    _model.setAutoplay(true);
+    _model.setPauseOnPageExit(true);
+    _model.setFPS(20);
+    _model.setStepsPerDisplay(1);
+  });
+
+  function PIDcontroller(setPoint, processValue, velocity, I_acc, kp, ki, kd) {  // > CustomCode.PIDcontroller:1
+    /*  // > CustomCode.PIDcontroller:2
+    Arguments:  // > CustomCode.PIDcontroller:3
+    ----------  // > CustomCode.PIDcontroller:4
+      - setPoint: reference value  // > CustomCode.PIDcontroller:5
+      - processValue: current value  // > CustomCode.PIDcontroller:6
+      - velocity: current value of velocity of the variable. The reference for the velocity is going to be always 0 (i.e. we want the object to have velocity = 0)  // > CustomCode.PIDcontroller:7
+      - I_acc: accumulated integral  // > CustomCode.PIDcontroller:8
+    Returns:  // > CustomCode.PIDcontroller:9
+    --------  // > CustomCode.PIDcontroller:10
+      - output: control signal to be passed to the system  // > CustomCode.PIDcontroller:11
+      - I_acc: new accumulated integral  // > CustomCode.PIDcontroller:12
+    */  // > CustomCode.PIDcontroller:13
+    var error = (setPoint - processValue);  // > CustomCode.PIDcontroller:14
+    var P = error;  // > CustomCode.PIDcontroller:15
+    var I = I_acc + error;  // > CustomCode.PIDcontroller:16
+    var D = -velocity;  // > CustomCode.PIDcontroller:17
+    var output = kp*P + ki*I + kd*D;  // > CustomCode.PIDcontroller:18
+    return [output, I];  // > CustomCode.PIDcontroller:19
+  }  // > CustomCode.PIDcontroller:20
+
+  /*  // > CustomCode.Control inputs:1
+    A function that access to global boolean variables that are true when some button  // > CustomCode.Control inputs:2
+    from the controller in the interface is being pressed by the user to modify the  // > CustomCode.Control inputs:3
+    dron angles.   // > CustomCode.Control inputs:4
+    The intensity of the gains can be modified via the variable defined here.  // > CustomCode.Control inputs:5
+    For the roll and pitch, the ref is reset to 0 when none of the buttons are pressed  // > CustomCode.Control inputs:6
+  */  // > CustomCode.Control inputs:7
+  // NOTE: drone controls could be better handled with a dictionary  // > CustomCode.Control inputs:8
+  function controlInputs () {  // > CustomCode.Control inputs:9
+    var gain = 0.1;  // > CustomCode.Control inputs:10
+    // YAW  // > CustomCode.Control inputs:11
+    if (yawController[0]) rpyRef[2] = rpyRef[2]-gain;  // > CustomCode.Control inputs:12
+    if (yawController[1]) rpyRef[2] = rpyRef[2]+gain;  // > CustomCode.Control inputs:13
+    // PITCH  // > CustomCode.Control inputs:14
+    if (pitchController[0]) rpyRef[1] = rpyRef[1]-gain;  // > CustomCode.Control inputs:15
+    if (pitchController[1]) rpyRef[1] = rpyRef[1]+gain;  // > CustomCode.Control inputs:16
+    if (!pitchController[0] && !pitchController[1]) rpyRef[1] = 0;  // > CustomCode.Control inputs:17
+    // ROLL  // > CustomCode.Control inputs:18
+    if (rollController[0]) rpyRef[0] = rpyRef[0]-gain;  // > CustomCode.Control inputs:19
+    if (rollController[1]) rpyRef[0] = rpyRef[0]+gain;  // > CustomCode.Control inputs:20
+    if (!rollController[0] && !rollController[1]) rpyRef[0] = 0;  // > CustomCode.Control inputs:21
+    // THROTTLE  // > CustomCode.Control inputs:22
+    if (throttleController[0]) xyzRef[2] = xyzRef[2]-gain;  // > CustomCode.Control inputs:23
+    if (throttleController[1]) xyzRef[2] = xyzRef[2]+gain;  // > CustomCode.Control inputs:24
+  }  // > CustomCode.Control inputs:25
+
+  /*  // > CustomCode.Automatic move functions:1
+    Functions to control the automatic movement of the vehicle.   // > CustomCode.Automatic move functions:2
+  */  // > CustomCode.Automatic move functions:3
+  function checkIfControlIsManual () {  // > CustomCode.Automatic move functions:4
+    if (controllerMode == "manual") {  // > CustomCode.Automatic move functions:5
+      return true;  // > CustomCode.Automatic move functions:6
+    } else {  // > CustomCode.Automatic move functions:7
+      return false;  // > CustomCode.Automatic move functions:8
+    }  // > CustomCode.Automatic move functions:9
+  }  // > CustomCode.Automatic move functions:10
+  function desiredXYfromWtoV(rpy, xyz, xyzRef) {  // > CustomCode.Automatic move functions:11
+    /*  // > CustomCode.Automatic move functions:12
+    Transform coordinates from the xy plane in the World frame to the frame V,  // > CustomCode.Automatic move functions:13
+    attached to {B} but with xy parallel to the ground. A simple rotation.  // > CustomCode.Automatic move functions:14
+    Returns V^xyzRef, a 3-element array.  // > CustomCode.Automatic move functions:15
+    */  // > CustomCode.Automatic move functions:16
+    var sinYaw = Math.sin(rpy[2]);  // > CustomCode.Automatic move functions:17
+    var cosYaw = Math.cos(rpy[2]);  // > CustomCode.Automatic move functions:18
+    var x = xyzRef[0] - xyz[0];  // > CustomCode.Automatic move functions:19
+    var y = xyzRef[1] - xyz[1];  // > CustomCode.Automatic move functions:20
+    return [x*cosYaw + y*sinYaw, -x*sinYaw + y*cosYaw, 0];  // > CustomCode.Automatic move functions:21
+  }  // > CustomCode.Automatic move functions:22
+  function getAngleRefFromDesiredXYCoordinates(xyzRef, xyz, rpy, vxyz, axyz, m, T, rollOrPitch) {  // > CustomCode.Automatic move functions:23
+    /*  // > CustomCode.Automatic move functions:24
+    Returns the desired angle from the current and the desired coordinates. Gets  // > CustomCode.Automatic move functions:25
+    the controller derivatives from global variables.  // > CustomCode.Automatic move functions:26
+    */  // > CustomCode.Automatic move functions:27
+    // Compute required velocity in World Frame  // > CustomCode.Automatic move functions:28
+    var vRef = [  // > CustomCode.Automatic move functions:29
+      xyzRef[0] - xyz[0],// + KvD*(-vxyz[0]),  // > CustomCode.Automatic move functions:30
+      xyzRef[1] - xyz[1] // + KvD*(-vxyz[1])  // > CustomCode.Automatic move functions:31
+      ];  // > CustomCode.Automatic move functions:32
+    // Rotate required velocity and current velocity from World frame to frame V  // > CustomCode.Automatic move functions:33
+    // (same as {B} but xy parallel to the ground)  // > CustomCode.Automatic move functions:34
+    var sinYaw = Math.sin(rpy[2]);  // > CustomCode.Automatic move functions:35
+    var cosYaw = Math.cos(rpy[2]);  // > CustomCode.Automatic move functions:36
+    var VvRef = [vRef[0]*cosYaw + vRef[1]*sinYaw, -vRef[0]*sinYaw + vRef[1]*cosYaw, 0];  // > CustomCode.Automatic move functions:37
+    var Vv    = [vxyz[0]*cosYaw + vxyz[1]*sinYaw, -vxyz[0]*sinYaw + vxyz[1]*cosYaw, 0];  // > CustomCode.Automatic move functions:38
+    var Vaxyz = [axyz[0]*cosYaw + axyz[1]*sinYaw, -axyz[0]*sinYaw + axyz[1]*cosYaw, 0];  // > CustomCode.Automatic move functions:39
+    var angleRef;  // > CustomCode.Automatic move functions:40
+    switch (rollOrPitch) {  // > CustomCode.Automatic move functions:41
+      case "roll":  angleRef =  M/T*(K1auto*VvRef[1]-K2auto*Vv[1] + K3auto*(0-Vaxyz[1]));  // > CustomCode.Automatic move functions:42
+      break;  // > CustomCode.Automatic move functions:43
+      case "pitch": angleRef = -M/T*(K1auto*VvRef[0]-K2auto*Vv[0] + K3auto*(0-Vaxyz[0]));  // > CustomCode.Automatic move functions:44
+      break;  // > CustomCode.Automatic move functions:45
+      default: angleRef = 0; console.log("Bad angle (roll or pitch) identifier");  // > CustomCode.Automatic move functions:46
+    }  // > CustomCode.Automatic move functions:47
+    return angleRef;  // > CustomCode.Automatic move functions:48
+  }  // > CustomCode.Automatic move functions:49
+  function getYawRefFromDesiredXYCoordinates(xyzRef, xyz) {  // > CustomCode.Automatic move functions:50
+    /*  // > CustomCode.Automatic move functions:51
+    Returns the desired Yaw to point the drone to the required direction.  // > CustomCode.Automatic move functions:52
+    */  // > CustomCode.Automatic move functions:53
+    var x = xyzRef[0] - xyz[0];  // > CustomCode.Automatic move functions:54
+    var y = xyzRef[1] - xyz[1];  // > CustomCode.Automatic move functions:55
+    var yawRef = Math.atan2(y, x);  // > CustomCode.Automatic move functions:56
+    return yawRef;  // > CustomCode.Automatic move functions:57
+  }  // > CustomCode.Automatic move functions:58
+  function dist(pointA, pointB) {  // > CustomCode.Automatic move functions:59
+    // Returns the distance between two points  // > CustomCode.Automatic move functions:60
+    return Math.sqrt((pointA[0]-pointB[0])**2 + (pointA[1]-pointB[1])**2 + (pointA[2]-pointB[2])**2)  // > CustomCode.Automatic move functions:61
+  }  // > CustomCode.Automatic move functions:62
+  function constrain(value, min, max) {  // > CustomCode.Automatic move functions:63
+    // Returns the constrained value between two limits  // > CustomCode.Automatic move functions:64
+    if      (value > max) return max;  // > CustomCode.Automatic move functions:65
+    else if (value < min) return min;  // > CustomCode.Automatic move functions:66
+    else                  return value;  // > CustomCode.Automatic move functions:67
+  }  // > CustomCode.Automatic move functions:68
+
+  $(document).ready(function(){  // > CustomCode.HtmlView logic:1
+      // > CustomCode.HtmlView logic:2
+    $("#manualButton").click(function(){  // > CustomCode.HtmlView logic:3
+      $("#inputCoordinates").removeClass("d-flex");  // > CustomCode.HtmlView logic:4
+      $("#inputCoordinates").addClass("d-none");  // > CustomCode.HtmlView logic:5
+      $("#arrowControllers").removeClass("d-none");  // > CustomCode.HtmlView logic:6
+      $("#arrowControllers").addClass("d-flex");  // > CustomCode.HtmlView logic:7
+      $("#zigZagSliders").removeClass("d-flex");  // > CustomCode.HtmlView logic:8
+      $("#zigZagSliders").addClass("d-none");  // > CustomCode.HtmlView logic:9
+      $("#plottingPanelAnglesContainer").removeClass("d-none");  // > CustomCode.HtmlView logic:10
+      $("#plottingPanelAnglesContainer").addClass("d-flex");  // > CustomCode.HtmlView logic:11
+      $("#plottingPanelXYposContainer").removeClass("d-flex");  // > CustomCode.HtmlView logic:12
+      $("#plottingPanelXYposContainer").addClass("d-none");  // > CustomCode.HtmlView logic:13
+    });  // > CustomCode.HtmlView logic:14
+    $("#automaticButton").click(function(){  // > CustomCode.HtmlView logic:15
+      $("#arrowControllers").removeClass("d-flex");  // > CustomCode.HtmlView logic:16
+      $("#arrowControllers").addClass("d-none");  // > CustomCode.HtmlView logic:17
+      $("#inputCoordinates").removeClass("d-none");  // > CustomCode.HtmlView logic:18
+      $("#inputCoordinates").addClass("d-flex");  // > CustomCode.HtmlView logic:19
+      $("#zigZagSliders").removeClass("d-flex");  // > CustomCode.HtmlView logic:20
+      $("#zigZagSliders").addClass("d-none");  // > CustomCode.HtmlView logic:21
+      $("#plottingPanelAnglesContainer").removeClass("d-none");  // > CustomCode.HtmlView logic:22
+      $("#plottingPanelAnglesContainer").addClass("d-flex");  // > CustomCode.HtmlView logic:23
+      $("#plottingPanelXYposContainer").removeClass("d-flex");  // > CustomCode.HtmlView logic:24
+      $("#plottingPanelXYposContainer").addClass("d-none");  // > CustomCode.HtmlView logic:25
+    });  // > CustomCode.HtmlView logic:26
+      // > CustomCode.HtmlView logic:27
+    $("#pathButton").click(function(){  // > CustomCode.HtmlView logic:28
+      $("#arrowControllers").removeClass("d-flex");  // > CustomCode.HtmlView logic:29
+      $("#arrowControllers").addClass("d-none");  // > CustomCode.HtmlView logic:30
+      $("#inputCoordinates").removeClass("d-flex");  // > CustomCode.HtmlView logic:31
+      $("#inputCoordinates").addClass("d-none");  // > CustomCode.HtmlView logic:32
+      $("#zigZagSliders").removeClass("d-none");  // > CustomCode.HtmlView logic:33
+      $("#zigZagSliders").addClass("d-flex");  // > CustomCode.HtmlView logic:34
+      $("#plottingPanelAnglesContainer").removeClass("d-flex");  // > CustomCode.HtmlView logic:35
+      $("#plottingPanelAnglesContainer").addClass("d-none");  // > CustomCode.HtmlView logic:36
+      $("#plottingPanelXYposContainer").removeClass("d-none");  // > CustomCode.HtmlView logic:37
+      $("#plottingPanelXYposContainer").addClass("d-flex");  // > CustomCode.HtmlView logic:38
+    });  // > CustomCode.HtmlView logic:39
+  });  // > CustomCode.HtmlView logic:40
+
+  _model.addToInitialization(function() {
+    _initializeSolvers();
+  });
+
+  _model.addToEvolution(function() {
+    if (!__pagesEnabled["Velocities and acceleration"]) return;
+    _ODEi_evolution1.step();
+  });
+
+  _model.addToFixedRelations(function() { _isPaused = _model.isPaused(); _isPlaying = _model.isPlaying(); });
+
+  _model.addToFixedRelations(function() {
+    if (!__pagesEnabled["SignalControl"]) return;
+    // Compute the signals with the PID controllers based on the reference values  // > FixedRelations.SignalControl:1
+    [u[0], Irpy[0]] = PIDcontroller(rpyRef[0], rpy[0], vrpy[0], Irpy[0], KpRollPitch, KiRollPitch, KdRollPitch);  // > FixedRelations.SignalControl:2
+    [u[1], Irpy[1]] = PIDcontroller(rpyRef[1], rpy[1], vrpy[1], Irpy[1], KpRollPitch, KiRollPitch, KdRollPitch);  // > FixedRelations.SignalControl:3
+    [u[2], Irpy[2]] = PIDcontroller(rpyRef[2], rpy[2], vrpy[2], Irpy[2], KpYaw, KiYaw, KdYaw);  // > FixedRelations.SignalControl:4
+    u[3] = KpThrottle*(-1)*(xyzRef[2] - xyz[2]) + KiThrottle*(-1)*(0 - vxyz[2]) + M*g;  // > FixedRelations.SignalControl:5
+    // That (-1) is here because u[3] is related to the thrust, and that is related to  // > FixedRelations.SignalControl:6
+    // altitude, which is -z  // > FixedRelations.SignalControl:7
+    // Modify the angle ref values depending on the controllerMode  // > FixedRelations.SignalControl:8
+    switch (controllerMode) {  // > FixedRelations.SignalControl:9
+      case "manual":  // > FixedRelations.SignalControl:10
+      controlInputs();  // > FixedRelations.SignalControl:11
+      break;  // > FixedRelations.SignalControl:12
+      case "automatic":  // > FixedRelations.SignalControl:13
+      rpyRef[0] = constrain(getAngleRefFromDesiredXYCoordinates(xyzRef, xyz, rpy, vxyz, axyz, M, u[3], "roll" ), -constrainRefAngles, constrainRefAngles);  // > FixedRelations.SignalControl:14
+      rpyRef[1] = constrain(getAngleRefFromDesiredXYCoordinates(xyzRef, xyz, rpy, vxyz, axyz, M, u[3], "pitch"), -constrainRefAngles, constrainRefAngles);  // > FixedRelations.SignalControl:15
+      break;  // > FixedRelations.SignalControl:16
+      case "path":  // > FixedRelations.SignalControl:17
+      rpyRef[0] = constrain(getAngleRefFromDesiredXYCoordinates(xyzRef, xyz, rpy, vxyz, axyz, M, u[3], "roll" ), -constrainRefAngles, constrainRefAngles);  // > FixedRelations.SignalControl:18
+      rpyRef[1] = constrain(getAngleRefFromDesiredXYCoordinates(xyzRef, xyz, rpy, vxyz, axyz, M, u[3], "pitch"), -constrainRefAngles, constrainRefAngles);  // > FixedRelations.SignalControl:19
+      if (dist(xyz, xyzRef) < radiusThresholdPathMode) {  // > FixedRelations.SignalControl:20
+        xyzRef = [(xyzRef[0]+pathZigZagX), (xyzRef[1]+pathZigZagY)%(pathZigZagY*2), (xyzRef[2]+pathZigZagZ)%(pathZigZagZ*2)];  // > FixedRelations.SignalControl:21
+      }  // > FixedRelations.SignalControl:22
+    }  // > FixedRelations.SignalControl:23
+  });
+
+  _model.addToFixedRelations(function() { _isPaused = _model.isPaused(); _isPlaying = _model.isPlaying(); });
+
+  function _initializeSolvers() {
+    for (var i=0,n=_privateOdesList.length; i<n; i++) _privateOdesList[i].initializeSolver();
+  }
+
+  function _automaticResetSolvers() {
+    for (var i=0,n=_privateOdesList.length; i<n; i++) _privateOdesList[i].automaticResetSolver();
+  }
+
+  _model.resetSolvers = function() {
+    for (var i=0,n=_privateOdesList.length; i<n; i++) _privateOdesList[i].resetSolver();
+  };
+
+  _getODE = function (_odeName) {
+    if (_odeName=="Velocities and acceleration") return _ODEi_evolution1;
+    return null;
+  }
+
+  function _getEventSolver(_odeName) {
+    var ode = _getODE(_odeName);
+    if (ode===null) return null;
+    return ode.getEventSolver();
+  }
+
+  function _setSolverClass(_odeName, _engine) {
+    var ode = _getODE(_odeName);
+    if (ode===null) return;
+    if (!_engine.setODE) {
+      var classname = _engine.toLowerCase();
+      if      (classname.indexOf("boga")>=0)   _engine = EJSS_ODE_SOLVERS.bogackiShampine23;
+      else if (classname.indexOf("cash")>=0)   _engine = EJSS_ODE_SOLVERS.cashKarp45;
+      else if (classname.indexOf("dopri5")>=0) _engine = EJSS_ODE_SOLVERS.dopri5;
+      else if (classname.indexOf("dopri8")>=0) _engine = EJSS_ODE_SOLVERS.dopri853;
+      else if (classname.indexOf("richa")>=0)  _engine = EJSS_ODE_SOLVERS.eulerRichardson;
+      else if (classname.indexOf("euler")>=0)  _engine = EJSS_ODE_SOLVERS.euler;
+      else if (classname.indexOf("fehlberg87")>=0) _engine = EJSS_ODE_SOLVERS.fehlberg87;
+      else if (classname.indexOf("fehlberg8")>=0)  _engine = EJSS_ODE_SOLVERS.fehlberg8;
+      else if (classname.indexOf("radau")>=0)   _engine = EJSS_ODE_SOLVERS.radau5;
+      else if (classname.indexOf("runge")>=0)  _engine = EJSS_ODE_SOLVERS.rungeKutta4;
+      else if (classname.indexOf("rk4")>=0)    _engine = EJSS_ODE_SOLVERS.rungeKutta4;
+      else if (classname.indexOf("verlet")>=0) _engine = EJSS_ODE_SOLVERS.velocityVerlet;
+    }
+    if (_engine) ode.setSolverClass(_engine);
+  }
+
+  function _ODE_evolution1() {
+    var __odeSelf = {};
+    var __eventSolver;
+    var __solverClass = EJSS_ODE_SOLVERS.euler;
+    var __state=[];
+    var __ignoreErrors=false;
+    var __mustInitialize=true;
+    var __isEnabled=true;
+    var __mustUserReinitialize=false;
+    var __mustReinitialize=true;
+
+    var _rpyLength;
+    var _vrpyLength;
+    var _xyzLength;
+    var _vxyzLength;
+
+    __odeSelf._getOdeVars = function (){ return["rpy","vrpy","xyz","vxyz","t"]};
+
+    __odeSelf.setSolverClass = function(__aSolverClass) {
+      __solverClass = __aSolverClass;
+      __instantiateSolver();
+    };
+
+    function __instantiateSolver() {
+      __state=[];
+      _rpyLength = rpy.length;
+      _vrpyLength = vrpy.length;
+      _xyzLength = xyz.length;
+      _vxyzLength = vxyz.length;
+      __pushState();
+      __eventSolver = EJSS_ODE_SOLVERS.interpolatorEventSolver(__solverClass(),__odeSelf);
+      __mustInitialize = true;
+    }
+
+    __odeSelf.setEnabled = function(_enabled) { __isEnabled = _enabled; };
+
+    __odeSelf.getIndependentVariableValue = function() { return __eventSolver.getIndependentVariableValue(); };
+
+    __odeSelf.getInternalStepSize = function() { return __eventSolver.getInternalStepSize(); };
+
+    __odeSelf.isAccelerationIndependentOfVelocity = function() { return false; };
+
+    __odeSelf.initializeSolver = function() {
+      if (__arraysChanged()) { __instantiateSolver(); __odeSelf.initializeSolver(); return; }
+      __pushState();
+      __eventSolver.initialize(dt);
+      __eventSolver.setBestInterpolation(false);
+      __eventSolver.setMaximumInternalSteps(10000);
+      __eventSolver.removeAllEvents();
+      for(k in userEvents1){__eventSolver.addEvent(userEvents1[k]);}
+      __eventSolver.setEstimateFirstStep(false);
+      __eventSolver.setEnableExceptions(false);
+      __eventSolver.setTolerances(0.00001,0.00001);
+      __mustReinitialize = true;
+      __mustInitialize = false;
+    };
+
+    function __pushState() {
+      // Copy our variables to __state[] 
+        var __j=0;
+        var __n=0;
+        var __cIn=0;
+      if (!__mustReinitialize)
+        for (__j=0,__n=__cIn; __j<_rpyLength; __j++)
+           if (__state[__n++]!=rpy[__j]) { __mustReinitialize = true; break; }
+        for (__j=0;__j<_rpyLength; __j++) {
+          __state[__cIn++] = rpy[__j];
+        }
+      if (!__mustReinitialize)
+        for (__j=0,__n=__cIn; __j<_vrpyLength; __j++)
+           if (__state[__n++]!=vrpy[__j]) { __mustReinitialize = true; break; }
+        for (__j=0;__j<_vrpyLength; __j++) {
+          __state[__cIn++] = vrpy[__j];
+        }
+      if (!__mustReinitialize)
+        for (__j=0,__n=__cIn; __j<_xyzLength; __j++)
+           if (__state[__n++]!=xyz[__j]) { __mustReinitialize = true; break; }
+        for (__j=0;__j<_xyzLength; __j++) {
+          __state[__cIn++] = xyz[__j];
+        }
+      if (!__mustReinitialize)
+        for (__j=0,__n=__cIn; __j<_vxyzLength; __j++)
+           if (__state[__n++]!=vxyz[__j]) { __mustReinitialize = true; break; }
+        for (__j=0;__j<_vxyzLength; __j++) {
+          __state[__cIn++] = vxyz[__j];
+        }
+        if (__state[__cIn]!=t) __mustReinitialize = true;
+        __state[__cIn++] = t;
+    }
+
+    function __arraysChanged () {
+      if (_rpyLength != rpy.length) return true;
+      if (_vrpyLength != vrpy.length) return true;
+      if (_xyzLength != xyz.length) return true;
+      if (_vxyzLength != vxyz.length) return true;
+      return false;
+    }
+
+    __odeSelf.getEventSolver = function() {
+      return __eventSolver;
+    };
+
+    __odeSelf.resetSolver = function() {
+      __mustUserReinitialize = true;
+    };
+
+    __odeSelf.automaticResetSolver = function() {
+      __mustReinitialize = true;
+    };
+
+    function __errorAction () {
+      if (__ignoreErrors) return;
+      console.log (__eventSolver.getErrorMessage());
+      _pause();
+      // Make sure the solver is reinitialized;
+      __mustReinitialize = true;
+    }
+
+    __odeSelf.step = function() { return __privateStep(false); };
+
+    __odeSelf.solverStep = function() { return __privateStep(true); };
+
+    function __privateStep(__takeMaximumStep) {
+      if (!__isEnabled) return 0;
+      if (dt===0) return 0;
+      if (__mustInitialize) __odeSelf.initializeSolver();
+      if (__arraysChanged()) { __instantiateSolver(); __odeSelf.initializeSolver(); }
+      __eventSolver.setStepSize(dt);
+      __eventSolver.setInternalStepSize(dt);
+      __eventSolver.setMaximumInternalSteps(10000);
+      __eventSolver.setTolerances(0.00001,0.00001);
+      __pushState();
+      if (__mustUserReinitialize) { 
+        __eventSolver.userReinitialize();
+        __mustUserReinitialize = false;
+        __mustReinitialize = false;
+        if (__eventSolver.getErrorCode()!=EJSS_ODE_SOLVERS.ERROR.NO_ERROR) __errorAction();
+      }
+      else if (__mustReinitialize) { 
+        __eventSolver.reinitialize();
+        __mustReinitialize = false;
+        if (__eventSolver.getErrorCode()!=EJSS_ODE_SOLVERS.ERROR.NO_ERROR) __errorAction();
+      }
+      var __stepTaken = __takeMaximumStep ? __eventSolver.maxStep() : __eventSolver.step();
+      // Extract our variables from __state
+        var __i=0;
+        var __cOut=0;
+        for (__i=0;__i<_rpyLength; __i++) {
+          rpy[__i] = __state[__cOut++];
+        }
+        for (__i=0;__i<_vrpyLength; __i++) {
+          vrpy[__i] = __state[__cOut++];
+        }
+        for (__i=0;__i<_xyzLength; __i++) {
+          xyz[__i] = __state[__cOut++];
+        }
+        for (__i=0;__i<_vxyzLength; __i++) {
+          vxyz[__i] = __state[__cOut++];
+        }
+        t = __state[__cOut++];
+      // Check for error
+      if (__eventSolver.getErrorCode()!=EJSS_ODE_SOLVERS.ERROR.NO_ERROR) __errorAction();
+      return __stepTaken;
+    }
+
+    __odeSelf.getState = function() { return __state; };
+
+    __odeSelf.getRate = function(_aState,_aRate) {
+      _aRate[_aRate.length-1] = 0.0; // In case the prelim code returns
+      var __index=-1; // so that it can be used in preliminary code
+      // Extract our variables from _aState
+        var __i=0;
+        var __cOut=0;
+        var rpy = [];
+        for (__i=0;__i<_rpyLength; __i++) {
+          rpy[__i] = _aState[__cOut++];
+        }
+        var vrpy = [];
+        for (__i=0;__i<_vrpyLength; __i++) {
+          vrpy[__i] = _aState[__cOut++];
+        }
+        var xyz = [];
+        for (__i=0;__i<_xyzLength; __i++) {
+          xyz[__i] = _aState[__cOut++];
+        }
+        var vxyz = [];
+        for (__i=0;__i<_vxyzLength; __i++) {
+          vxyz[__i] = _aState[__cOut++];
+        }
+        var t = _aState[__cOut++];
+      // Preliminary code: Code to be executed before rate equations are evaluated
+        /*  // > Preliminary code for ODE.Velocities and acceleration:1
+        This is executed each iteration, before computing the derivatives, fixing the  // > Preliminary code for ODE.Velocities and acceleration:2
+        angular accelerations according to the equations given in the document. Note that  // > Preliminary code for ODE.Velocities and acceleration:3
+        the expression for the yaw is different because of the symmetry of the system.  // > Preliminary code for ODE.Velocities and acceleration:4
+        */  // > Preliminary code for ODE.Velocities and acceleration:5
+        // ANGULAR ACCELERATIONS  // > Preliminary code for ODE.Velocities and acceleration:6
+        arpy[0] = -vrpy[2]*vrpy[1] + 2*d*Kthrust/I * u[0];  // > Preliminary code for ODE.Velocities and acceleration:7
+        arpy[1] =  vrpy[2]*vrpy[0] + 2*d*Kthrust/I * u[1];  // > Preliminary code for ODE.Velocities and acceleration:8
+        arpy[2] =                Kfriction/I * u[2];  // > Preliminary code for ODE.Velocities and acceleration:9
+        // LINEAR ACCELERATIONS  // > Preliminary code for ODE.Velocities and acceleration:10
+        sinr = Math.sin(rpy[0]); cosr = Math.cos(rpy[0]);  // > Preliminary code for ODE.Velocities and acceleration:11
+        sinp = Math.sin(rpy[1]); cosp = Math.cos(rpy[1]);  // > Preliminary code for ODE.Velocities and acceleration:12
+        siny = Math.sin(rpy[2]); cosy = Math.cos(rpy[2]);  // > Preliminary code for ODE.Velocities and acceleration:13
+        axyz[0] = -Kairdrag*vxyz[0] - u[3]/M * (sinp*cosr*cosy + sinr*siny);  // > Preliminary code for ODE.Velocities and acceleration:14
+        axyz[1] = -Kairdrag*vxyz[1] - u[3]/M * (sinp*cosr*siny - sinr*cosy);  // > Preliminary code for ODE.Velocities and acceleration:15
+        axyz[2] = -Kairdrag*vxyz[2] + g - u[3]/M * (cosp*cosr);  // > Preliminary code for ODE.Velocities and acceleration:16
+      // Compute the rate
+        var __cRate=0;
+        var i;
+        for (i=0;i<_rpyLength;i++) {
+          _aRate[__cRate++] = Array.isArray(vrpy) ? vrpy[i] : vrpy; // Rate for ODE: Velocities and acceleration:rpy
+        }
+        for (i=0;i<_vrpyLength;i++) {
+          _aRate[__cRate++] = Array.isArray(arpy) ? arpy[i] : arpy; // Rate for ODE: Velocities and acceleration:vrpy
+        }
+        for (i=0;i<_xyzLength;i++) {
+          _aRate[__cRate++] = Array.isArray(vxyz) ? vxyz[i] : vxyz; // Rate for ODE: Velocities and acceleration:xyz
+        }
+        for (i=0;i<_vxyzLength;i++) {
+          _aRate[__cRate++] = Array.isArray(axyz) ? axyz[i] : axyz; // Rate for ODE: Velocities and acceleration:vxyz
+        }
+        _aRate[__cRate++] = 1; // independent variable
+        return _aRate;
+    }; //end of getRate
+
+    __odeSelf._addEvent = function(userCondition,userAction,eventType,eventMethod,maxIter,eventTolerance,endAtEvent){
+    var User_Event = function (userCondition,userAction,eventType,eventMethod,maxIter,eventTolerance,endAtEvent) {
+      var _eventSelf = {};
+
+      _eventSelf.getTypeOfEvent = function() { return eventType; };
+
+      _eventSelf.getRootFindingMethod = function() { return eventMethod; };
+
+      _eventSelf.getMaxIterations = function() { return maxIter; };
+
+      _eventSelf.getTolerance = function() { return eventTolerance; };
+
+      _eventSelf.evaluate = function(_aState) { 
+      // Extract our variables from _aState
+        var __i=0;
+        var __cOut=0;
+        var rpy = [];
+        for (__i=0;__i<_rpyLength; __i++) {
+          rpy[__i] = _aState[__cOut++];
+        }
+        var vrpy = [];
+        for (__i=0;__i<_vrpyLength; __i++) {
+          vrpy[__i] = _aState[__cOut++];
+        }
+        var xyz = [];
+        for (__i=0;__i<_xyzLength; __i++) {
+          xyz[__i] = _aState[__cOut++];
+        }
+        var vxyz = [];
+        for (__i=0;__i<_vxyzLength; __i++) {
+          vxyz[__i] = _aState[__cOut++];
+        }
+        var t = _aState[__cOut++];
+      return eval(userCondition);
+      };
+
+      _eventSelf.action = function() { 
+      // Extract our variables from __state
+        var __i=0;
+        var __cOut=0;
+        for (__i=0;__i<_rpyLength; __i++) {
+          rpy[__i] = __state[__cOut++];
+        }
+        for (__i=0;__i<_vrpyLength; __i++) {
+          vrpy[__i] = __state[__cOut++];
+        }
+        for (__i=0;__i<_xyzLength; __i++) {
+          xyz[__i] = __state[__cOut++];
+        }
+        for (__i=0;__i<_vxyzLength; __i++) {
+          vxyz[__i] = __state[__cOut++];
+        }
+        t = __state[__cOut++];
+        var _returnValue = __userDefinedAction();
+      // Copy our variables to __state[] 
+        var __j=0;
+        var __n=0;
+        var __cIn=0;
+        for (__j=0;__j<_rpyLength; __j++) {
+          __state[__cIn++] = rpy[__j];
+        }
+        for (__j=0;__j<_vrpyLength; __j++) {
+          __state[__cIn++] = vrpy[__j];
+        }
+        for (__j=0;__j<_xyzLength; __j++) {
+          __state[__cIn++] = xyz[__j];
+        }
+        for (__j=0;__j<_vxyzLength; __j++) {
+          __state[__cIn++] = vxyz[__j];
+        }
+        __state[__cIn++] = t;
+        return _returnValue;
+      };
+
+      function __userDefinedAction() {
+        if (undefined != functions) eval(functions.toString());
+        eval(userAction);
+        return endAtEvent;
+      }
+
+      return _eventSelf;
+    }; // End of event
+
+   userEvents1.push(User_Event(userCondition,userAction,eventType,eventMethod,maxIter,eventTolerance,endAtEvent));
+   }
+
+    __instantiateSolver();
+
+    return __odeSelf;
+  }
+
+  function _historic_rpy(__time) {
+    var __beginIndex = 0;
+    return _ODEi_evolution1.getEventSolver().getStateHistory().interpolate(__time,new Array(rpy.length),__beginIndex,rpy.ength);
+  }
+
+  function _historic_vrpy(__time) {
+    var __beginIndex = 0 + rpy.length;
+    return _ODEi_evolution1.getEventSolver().getStateHistory().interpolate(__time,new Array(vrpy.length),__beginIndex,vrpy.ength);
+  }
+
+  function _historic_xyz(__time) {
+    var __beginIndex = 0 + rpy.length + vrpy.length;
+    return _ODEi_evolution1.getEventSolver().getStateHistory().interpolate(__time,new Array(xyz.length),__beginIndex,xyz.ength);
+  }
+
+  function _historic_vxyz(__time) {
+    var __beginIndex = 0 + rpy.length + vrpy.length + xyz.length;
+    return _ODEi_evolution1.getEventSolver().getStateHistory().interpolate(__time,new Array(vxyz.length),__beginIndex,vxyz.ength);
+  }
+
+    _model._fontResized = function(iBase,iSize,iDelta) {
+      _view._fontResized(iBase,iSize,iDelta);
+  }; // end of _fontResized
+
+  function _getViews() {
+    var _viewsInfo = [];
+    var _counter = 0;
+    _viewsInfo[_counter++] = { name : "HtmlView Page", width : 800, height : 600 };
+    return _viewsInfo;
+  } // end of _getViews
+
+  function _selectView(_viewNumber) {
+    _view = null;
+    _view = new quadrotor_View(_topFrame,_viewNumber,_libraryPath,_codebasePath);
+    var _view_super_reset = _view._reset;
+    _view._reset = function() {
+      _view_super_reset();
+      switch(_viewNumber) {
+        case -10 : break; // make Lint happy
+        default :
+        case 0:
+          _view.fixZ.linkProperty("Angle",  function() { return 3.14/2; } ); // HtmlView Page linking property 'Angle' for element 'fixZ'
+          _view.desiredPosition.linkProperty("Position",  function() { return xyz; }, function(_v) { xyz = _v; } ); // HtmlView Page linking property 'Position' for element 'desiredPosition'
+          _view.desiredPosition.linkProperty("Size",  function() { return [xyzRef[0] - xyz[0], xyzRef[1] - xyz[1], 0]; } ); // HtmlView Page linking property 'Size' for element 'desiredPosition'
+          _view.dronPosition.linkProperty("Size",  function() { return xyz; }, function(_v) { xyz = _v; } ); // HtmlView Page linking property 'Size' for element 'dronPosition'
+          _view.desiredPositionPoint.linkProperty("X",  function() { return xyzRef[0]; } ); // HtmlView Page linking property 'X' for element 'desiredPositionPoint'
+          _view.desiredPositionPoint.linkProperty("Y",  function() { return xyzRef[1]; } ); // HtmlView Page linking property 'Y' for element 'desiredPositionPoint'
+          _view.desiredPositionPoint.linkProperty("Z",  function() { return xyzRef[2]; } ); // HtmlView Page linking property 'Z' for element 'desiredPositionPoint'
+          _view.desiredPositionPoint.linkProperty("Visibility",  function() { return !checkIfControlIsManual(); } ); // HtmlView Page linking property 'Visibility' for element 'desiredPositionPoint'
+          _view.quadFrame.linkProperty("X",  function() { return xyz[0]; } ); // HtmlView Page linking property 'X' for element 'quadFrame'
+          _view.quadFrame.linkProperty("Y",  function() { return xyz[1]; } ); // HtmlView Page linking property 'Y' for element 'quadFrame'
+          _view.quadFrame.linkProperty("Z",  function() { return xyz[2]; } ); // HtmlView Page linking property 'Z' for element 'quadFrame'
+          _view.rotateYaw.linkProperty("Angle",  function() { return rpy[2]; } ); // HtmlView Page linking property 'Angle' for element 'rotateYaw'
+          _view.rotatePitch.linkProperty("Angle",  function() { return rpy[1]; } ); // HtmlView Page linking property 'Angle' for element 'rotatePitch'
+          _view.rotateRoll.linkProperty("Angle",  function() { return rpy[0]; } ); // HtmlView Page linking property 'Angle' for element 'rotateRoll'
+          _view.desiredPositionV.linkProperty("Size",  function() { return desiredXYfromWtoV(rpy, xyz, xyzRef); } ); // HtmlView Page linking property 'Size' for element 'desiredPositionV'
+          _view.desiredPositionV.linkProperty("Visibility",  function() { return !checkIfControlIsManual(); } ); // HtmlView Page linking property 'Visibility' for element 'desiredPositionV'
+          _view.rollTrail.linkProperty("InputX",  function() { return t; }, function(_v) { t = _v; } ); // HtmlView Page linking property 'InputX' for element 'rollTrail'
+          _view.rollTrail.linkProperty("InputY",  function() { return rpy[0]; } ); // HtmlView Page linking property 'InputY' for element 'rollTrail'
+          _view.pitchTrail.linkProperty("InputX",  function() { return t; }, function(_v) { t = _v; } ); // HtmlView Page linking property 'InputX' for element 'pitchTrail'
+          _view.pitchTrail.linkProperty("InputY",  function() { return rpy[1]; } ); // HtmlView Page linking property 'InputY' for element 'pitchTrail'
+          _view.xyPositionTrail.linkProperty("InputX",  function() { return xyz[0]; } ); // HtmlView Page linking property 'InputX' for element 'xyPositionTrail'
+          _view.xyPositionTrail.linkProperty("InputY",  function() { return xyz[1]; } ); // HtmlView Page linking property 'InputY' for element 'xyPositionTrail'
+          _view.manualButton.setAction("OnClick", function(_data,_info) {
+  controllerMode = "manual";
+
+}); // HtmlView Page setting action 'OnClick' for element 'manualButton'
+          _view.automaticButton.setAction("OnClick", function(_data,_info) {
+  controllerMode = "automatic";
+
+}); // HtmlView Page setting action 'OnClick' for element 'automaticButton'
+          _view.pathButton.setAction("OnClick", function(_data,_info) {
+  controllerMode = "path";
+
+}); // HtmlView Page setting action 'OnClick' for element 'pathButton'
+          _view.playPauseButton.setAction("OffClick", _pause); // HtmlView Page setting action 'OffClick' for element 'playPauseButton'
+          _view.playPauseButton.linkProperty("State",  function() { return _isPaused; } ); // HtmlView Page linking property 'State' for element 'playPauseButton'
+          _view.playPauseButton.setAction("OnClick", _play); // HtmlView Page setting action 'OnClick' for element 'playPauseButton'
+          _view.stepButton.setAction("OnClick", _step); // HtmlView Page setting action 'OnClick' for element 'stepButton'
+          _view.throttleUp.setAction("OnRelease", function(_data,_info) {
+  throttleController[0] = false;
+
+}); // HtmlView Page setting action 'OnRelease' for element 'throttleUp'
+          _view.throttleUp.setAction("OnPress", function(_data,_info) {
+  throttleController[0] = true;
+
+}); // HtmlView Page setting action 'OnPress' for element 'throttleUp'
+          _view.throttleUp.linkProperty("Text",  function() { return '<i class="bi bi-caret-up"></i>'; } ); // HtmlView Page linking property 'Text' for element 'throttleUp'
+          _view.yawLeft.setAction("OnRelease", function(_data,_info) {
+  yawController[0] = false;
+
+}); // HtmlView Page setting action 'OnRelease' for element 'yawLeft'
+          _view.yawLeft.linkProperty("Text",  function() { return '<i class="bi bi-arrow-90deg-left"></i>'; } ); // HtmlView Page linking property 'Text' for element 'yawLeft'
+          _view.yawLeft.setAction("OnPress", function(_data,_info) {
+  yawController[0] = true;
+
+}); // HtmlView Page setting action 'OnPress' for element 'yawLeft'
+          _view.yawRight.setAction("OnRelease", function(_data,_info) {
+  yawController[1] = false;
+
+}); // HtmlView Page setting action 'OnRelease' for element 'yawRight'
+          _view.yawRight.linkProperty("Text",  function() { return '<i class="bi bi-arrow-90deg-right"></i>'; } ); // HtmlView Page linking property 'Text' for element 'yawRight'
+          _view.yawRight.setAction("OnPress", function(_data,_info) {
+  yawController[1] = true;
+
+}); // HtmlView Page setting action 'OnPress' for element 'yawRight'
+          _view.throttleDown.setAction("OnRelease", function(_data,_info) {
+  throttleController[1] = false;
+
+}); // HtmlView Page setting action 'OnRelease' for element 'throttleDown'
+          _view.throttleDown.linkProperty("Text",  function() { return '<i class="bi bi-caret-down"></i>'; } ); // HtmlView Page linking property 'Text' for element 'throttleDown'
+          _view.throttleDown.setAction("OnPress", function(_data,_info) {
+  throttleController[1] = true;
+
+}); // HtmlView Page setting action 'OnPress' for element 'throttleDown'
+          _view.pitchUp.setAction("OnRelease", function(_data,_info) {
+  pitchController[0] = false;
+
+}); // HtmlView Page setting action 'OnRelease' for element 'pitchUp'
+          _view.pitchUp.linkProperty("Text",  function() { return '<i class="bi bi-arrow-up"></i>'; } ); // HtmlView Page linking property 'Text' for element 'pitchUp'
+          _view.pitchUp.setAction("OnPress", function(_data,_info) {
+  pitchController[0] = true;
+
+}); // HtmlView Page setting action 'OnPress' for element 'pitchUp'
+          _view.rollLeft.setAction("OnRelease", function(_data,_info) {
+  rollController[0] = false;
+
+}); // HtmlView Page setting action 'OnRelease' for element 'rollLeft'
+          _view.rollLeft.linkProperty("Text",  function() { return '<i class="bi bi-arrow-left"></i>'; } ); // HtmlView Page linking property 'Text' for element 'rollLeft'
+          _view.rollLeft.setAction("OnPress", function(_data,_info) {
+  rollController[0] = true;
+
+}); // HtmlView Page setting action 'OnPress' for element 'rollLeft'
+          _view.rollRight.setAction("OnRelease", function(_data,_info) {
+  rollController[1] = false;
+
+}); // HtmlView Page setting action 'OnRelease' for element 'rollRight'
+          _view.rollRight.linkProperty("Text",  function() { return '<i class="bi bi-arrow-right"></i>'; } ); // HtmlView Page linking property 'Text' for element 'rollRight'
+          _view.rollRight.setAction("OnPress", function(_data,_info) {
+  rollController[1] = true;
+
+}); // HtmlView Page setting action 'OnPress' for element 'rollRight'
+          _view.pitchDown.setAction("OnRelease", function(_data,_info) {
+  pitchController[1] = false;
+
+}); // HtmlView Page setting action 'OnRelease' for element 'pitchDown'
+          _view.pitchDown.linkProperty("Text",  function() { return '<i class="bi bi-arrow-down"></i>'; } ); // HtmlView Page linking property 'Text' for element 'pitchDown'
+          _view.pitchDown.setAction("OnPress", function(_data,_info) {
+  pitchController[1] = true;
+
+}); // HtmlView Page setting action 'OnPress' for element 'pitchDown'
+          _view.xCoordinateInputField.linkProperty("Value",  function() { return xRef; }, function(_v) { xRef = _v; } ); // HtmlView Page linking property 'Value' for element 'xCoordinateInputField'
+          _view.yCoordinateInputField.linkProperty("Value",  function() { return yRef; }, function(_v) { yRef = _v; } ); // HtmlView Page linking property 'Value' for element 'yCoordinateInputField'
+          _view.zCoordinateInputField.linkProperty("Value",  function() { return zRef; }, function(_v) { zRef = _v; } ); // HtmlView Page linking property 'Value' for element 'zCoordinateInputField'
+          _view.goButton.setAction("OnClick", function(_data,_info) {
+  xyzRef[0] = xRef;
+  xyzRef[1] = yRef;
+  xyzRef[2] = zRef;
+
+}); // HtmlView Page setting action 'OnClick' for element 'goButton'
+          _view.pathZigZagSliderX.linkProperty("Value",  function() { return pathZigZagX; }, function(_v) { pathZigZagX = _v; } ); // HtmlView Page linking property 'Value' for element 'pathZigZagSliderX'
+          _view.pathZigZagSliderY.linkProperty("Value",  function() { return pathZigZagY; }, function(_v) { pathZigZagY = _v; } ); // HtmlView Page linking property 'Value' for element 'pathZigZagSliderY'
+          _view.pathZigZagSliderZ.linkProperty("Value",  function() { return pathZigZagZ; }, function(_v) { pathZigZagZ = _v; } ); // HtmlView Page linking property 'Value' for element 'pathZigZagSliderZ'
+          _view.KpField.linkProperty("Value",  function() { return KpRollPitch; }, function(_v) { KpRollPitch = _v; } ); // HtmlView Page linking property 'Value' for element 'KpField'
+          _view.KiField.linkProperty("Value",  function() { return KiRollPitch; }, function(_v) { KiRollPitch = _v; } ); // HtmlView Page linking property 'Value' for element 'KiField'
+          _view.KdField.linkProperty("Value",  function() { return KdRollPitch; }, function(_v) { KdRollPitch = _v; } ); // HtmlView Page linking property 'Value' for element 'KdField'
+          _view.KpField2.linkProperty("Value",  function() { return KpYaw; }, function(_v) { KpYaw = _v; } ); // HtmlView Page linking property 'Value' for element 'KpField2'
+          _view.KiField2.linkProperty("Value",  function() { return KiYaw; }, function(_v) { KiYaw = _v; } ); // HtmlView Page linking property 'Value' for element 'KiField2'
+          _view.KdField2.linkProperty("Value",  function() { return KdYaw; }, function(_v) { KdYaw = _v; } ); // HtmlView Page linking property 'Value' for element 'KdField2'
+          _view.KpField3.linkProperty("Value",  function() { return KpThrottle; }, function(_v) { KpThrottle = _v; } ); // HtmlView Page linking property 'Value' for element 'KpField3'
+          _view.KiField3.linkProperty("Value",  function() { return KiThrottle; }, function(_v) { KiThrottle = _v; } ); // HtmlView Page linking property 'Value' for element 'KiField3'
+          _view.KdField3.linkProperty("Value",  function() { return KdThrottle; }, function(_v) { KdThrottle = _v; } ); // HtmlView Page linking property 'Value' for element 'KdField3'
+          _view.MField.linkProperty("Value",  function() { return M; }, function(_v) { M = _v; } ); // HtmlView Page linking property 'Value' for element 'MField'
+          _view.KiField4.linkProperty("Value",  function() { return d; }, function(_v) { d = _v; } ); // HtmlView Page linking property 'Value' for element 'KiField4'
+          _view.KpField22.linkProperty("Value",  function() { return Kthrust; }, function(_v) { Kthrust = _v; } ); // HtmlView Page linking property 'Value' for element 'KpField22'
+          _view.KiField22.linkProperty("Value",  function() { return Kairdrag; }, function(_v) { Kairdrag = _v; } ); // HtmlView Page linking property 'Value' for element 'KiField22'
+          _view.KdField22.linkProperty("Value",  function() { return Kfriction; }, function(_v) { Kfriction = _v; } ); // HtmlView Page linking property 'Value' for element 'KdField22'
+          _view.KpField32.linkProperty("Value",  function() { return K1auto; }, function(_v) { K1auto = _v; } ); // HtmlView Page linking property 'Value' for element 'KpField32'
+          _view.KiField32.linkProperty("Value",  function() { return K2auto; }, function(_v) { K2auto = _v; } ); // HtmlView Page linking property 'Value' for element 'KiField32'
+          _view.KdField32.linkProperty("Value",  function() { return K3auto; }, function(_v) { K3auto = _v; } ); // HtmlView Page linking property 'Value' for element 'KdField32'
+          break;
+      } // end of switch
+    }; // end of new reset
+
+    _model.setView(_view);
+    _model.reset();
+    _view._enableEPub();
+  } // end of _selectView
+
+  _model.setAutoplay(true);
+  _model.setFPS(20);
+  _model.setStepsPerDisplay(1);
+  _selectView(_model._autoSelectView(_getViews())); // this includes _model.reset()
+  return _model;
+}
+
+function quadrotor_View (_topFrame,_viewNumber,_libraryPath,_codebasePath) {
+  var _view;
+  switch(_viewNumber) {
+    case -10 : break; // make Lint happy
+    default :
+    case 0: _view = quadrotor_View_0 (_topFrame); break;
+  } // end of switch
+
+  if (_codebasePath) _view._setResourcePath(_codebasePath);
+
+  if (_libraryPath) _view._setLibraryPath(_libraryPath);
+
+  _view._addDescriptionPage('Intro Page','./quadrotor_Intro_1.html');
+
+  return _view;
+} // end of main function
+
+function quadrotor_View_0 (_topFrame) {
+  var _view = EJSS_CORE.createView(_topFrame);
+
+  _view._reset = function() {
+    _view._clearAll();
+    _view._addElement(EJSS_INTERFACE.panel,"main", _view._topFrame) // EJsS HtmlView.HtmlView Page: declaration of element 'main'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"drawingPanels", _view.main) // EJsS HtmlView.HtmlView Page: declaration of element 'drawingPanels'
+      .setProperty("ClassName","container d-flex flex-row align-items-center-fluid justify-content-evenly") // EJsS HtmlView.HtmlView Page: setting property 'ClassName' for element 'drawingPanels'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"droneVisualizationPanel", _view.drawingPanels) // EJsS HtmlView.HtmlView Page: declaration of element 'droneVisualizationPanel'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.drawingPanel,"drawingPanel3D", _view.droneVisualizationPanel) // EJsS HtmlView.HtmlView Page: declaration of element 'drawingPanel3D'
+      .setProperty("Draggable","ANY") // EJsS HtmlView.HtmlView Page: setting property 'Draggable' for element 'drawingPanel3D'
+      .setProperty("Enabled",true) // EJsS HtmlView.HtmlView Page: setting property 'Enabled' for element 'drawingPanel3D'
+      .setProperty("DecorationType","NONE") // EJsS HtmlView.HtmlView Page: setting property 'DecorationType' for element 'drawingPanel3D'
+      .setProperty("Visibility",true) // EJsS HtmlView.HtmlView Page: setting property 'Visibility' for element 'drawingPanel3D'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.group,"worldFrame", _view.drawingPanel3D) // EJsS HtmlView.HtmlView Page: declaration of element 'worldFrame'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.rotationY,"fixY", _view.worldFrame) // EJsS HtmlView.HtmlView Page: declaration of element 'fixY'
+      .setProperty("Angle",3.14) // EJsS HtmlView.HtmlView Page: setting property 'Angle' for element 'fixY'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.rotationZ,"fixZ", _view.worldFrame) // EJsS HtmlView.HtmlView Page: declaration of element 'fixZ'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.arrow,"xAxis", _view.worldFrame) // EJsS HtmlView.HtmlView Page: declaration of element 'xAxis'
+      .setProperty("FillColor","Red") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'xAxis'
+      .setProperty("Transparency",100) // EJsS HtmlView.HtmlView Page: setting property 'Transparency' for element 'xAxis'
+      .setProperty("SizeX",2) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'xAxis'
+      .setProperty("X",-1) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'xAxis'
+      .setProperty("LineColor","Red") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'xAxis'
+      .setProperty("Y",-1) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'xAxis'
+      .setProperty("Z",-1) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'xAxis'
+      .setProperty("SizeZ",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'xAxis'
+      .setProperty("SizeY",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'xAxis'
+      .setProperty("DrawFill",true) // EJsS HtmlView.HtmlView Page: setting property 'DrawFill' for element 'xAxis'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.arrow,"yAxis", _view.worldFrame) // EJsS HtmlView.HtmlView Page: declaration of element 'yAxis'
+      .setProperty("FillColor","Green") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'yAxis'
+      .setProperty("Transparency",100) // EJsS HtmlView.HtmlView Page: setting property 'Transparency' for element 'yAxis'
+      .setProperty("SizeX",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'yAxis'
+      .setProperty("X",-1) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'yAxis'
+      .setProperty("LineColor","Green") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'yAxis'
+      .setProperty("Y",-1) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'yAxis'
+      .setProperty("Z",-1) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'yAxis'
+      .setProperty("SizeZ",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'yAxis'
+      .setProperty("SizeY",2) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'yAxis'
+      .setProperty("DrawFill",true) // EJsS HtmlView.HtmlView Page: setting property 'DrawFill' for element 'yAxis'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.arrow,"zAxis", _view.worldFrame) // EJsS HtmlView.HtmlView Page: declaration of element 'zAxis'
+      .setProperty("FillColor","Blue") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'zAxis'
+      .setProperty("Transparency",100) // EJsS HtmlView.HtmlView Page: setting property 'Transparency' for element 'zAxis'
+      .setProperty("SizeX",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'zAxis'
+      .setProperty("X",-1) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'zAxis'
+      .setProperty("LineColor","Blue") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'zAxis'
+      .setProperty("Y",-1) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'zAxis'
+      .setProperty("Z",-1) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'zAxis'
+      .setProperty("SizeZ",2) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'zAxis'
+      .setProperty("SizeY",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'zAxis'
+      .setProperty("DrawFill",true) // EJsS HtmlView.HtmlView Page: setting property 'DrawFill' for element 'zAxis'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.arrow,"desiredPosition", _view.worldFrame) // EJsS HtmlView.HtmlView Page: declaration of element 'desiredPosition'
+      .setProperty("LineColor","Magenta") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'desiredPosition'
+      .setProperty("Visibility",false) // EJsS HtmlView.HtmlView Page: setting property 'Visibility' for element 'desiredPosition'
+      .setProperty("LineWidth",2) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'desiredPosition'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.arrow,"dronPosition", _view.worldFrame) // EJsS HtmlView.HtmlView Page: declaration of element 'dronPosition'
+      .setProperty("Position",[0,0,0]) // EJsS HtmlView.HtmlView Page: setting property 'Position' for element 'dronPosition'
+      .setProperty("LineColor","Cyan") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'dronPosition'
+      .setProperty("Visibility",false) // EJsS HtmlView.HtmlView Page: setting property 'Visibility' for element 'dronPosition'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.sphere,"desiredPositionPoint", _view.worldFrame) // EJsS HtmlView.HtmlView Page: declaration of element 'desiredPositionPoint'
+      .setProperty("Radius",0.1) // EJsS HtmlView.HtmlView Page: setting property 'Radius' for element 'desiredPositionPoint'
+      .setProperty("FillColor","Red") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'desiredPositionPoint'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.group,"quadFrame", _view.worldFrame) // EJsS HtmlView.HtmlView Page: declaration of element 'quadFrame'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.rotationZ,"rotateYaw", _view.quadFrame) // EJsS HtmlView.HtmlView Page: declaration of element 'rotateYaw'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.rotationY,"rotatePitch", _view.quadFrame) // EJsS HtmlView.HtmlView Page: declaration of element 'rotatePitch'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.rotationX,"rotateRoll", _view.quadFrame) // EJsS HtmlView.HtmlView Page: declaration of element 'rotateRoll'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.group,"quadBox", _view.quadFrame) // EJsS HtmlView.HtmlView Page: declaration of element 'quadBox'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.arrow,"xArrow", _view.quadBox) // EJsS HtmlView.HtmlView Page: declaration of element 'xArrow'
+      .setProperty("SizeX",1) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'xArrow'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'xArrow'
+      .setProperty("LineColor","Red") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'xArrow'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'xArrow'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'xArrow'
+      .setProperty("SizeZ",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'xArrow'
+      .setProperty("SizeY",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'xArrow'
+      .setProperty("DrawFill",false) // EJsS HtmlView.HtmlView Page: setting property 'DrawFill' for element 'xArrow'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.arrow,"yArrow", _view.quadBox) // EJsS HtmlView.HtmlView Page: declaration of element 'yArrow'
+      .setProperty("SizeX",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'yArrow'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'yArrow'
+      .setProperty("LineColor","Green") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'yArrow'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'yArrow'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'yArrow'
+      .setProperty("SizeZ",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'yArrow'
+      .setProperty("SizeY",1) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'yArrow'
+      .setProperty("DrawFill",false) // EJsS HtmlView.HtmlView Page: setting property 'DrawFill' for element 'yArrow'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.arrow,"zArrow", _view.quadBox) // EJsS HtmlView.HtmlView Page: declaration of element 'zArrow'
+      .setProperty("SizeX",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'zArrow'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'zArrow'
+      .setProperty("LineColor","Blue") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'zArrow'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'zArrow'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'zArrow'
+      .setProperty("SizeZ",1) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'zArrow'
+      .setProperty("SizeY",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'zArrow'
+      .setProperty("DrawFill",false) // EJsS HtmlView.HtmlView Page: setting property 'DrawFill' for element 'zArrow'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.arrow,"desiredPositionV", _view.quadBox) // EJsS HtmlView.HtmlView Page: declaration of element 'desiredPositionV'
+      .setProperty("Position",[0, 0, 0]) // EJsS HtmlView.HtmlView Page: setting property 'Position' for element 'desiredPositionV'
+      .setProperty("LineColor","Orange") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'desiredPositionV'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.segment,"stick1", _view.quadBox) // EJsS HtmlView.HtmlView Page: declaration of element 'stick1'
+      .setProperty("SizeX",0.5) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'stick1'
+      .setProperty("X",-0.25) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'stick1'
+      .setProperty("LineColor","Gray") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'stick1'
+      .setProperty("Y",-0.25) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'stick1'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'stick1'
+      .setProperty("SizeZ",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'stick1'
+      .setProperty("SizeY",0.5) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'stick1'
+      .setProperty("LineWidth",10) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'stick1'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.segment,"stick2", _view.quadBox) // EJsS HtmlView.HtmlView Page: declaration of element 'stick2'
+      .setProperty("SizeX",0.5) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'stick2'
+      .setProperty("X",-0.25) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'stick2'
+      .setProperty("LineColor","Gray") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'stick2'
+      .setProperty("Y",0.25) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'stick2'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'stick2'
+      .setProperty("SizeZ",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'stick2'
+      .setProperty("SizeY",-0.5) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'stick2'
+      .setProperty("LineWidth",10) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'stick2'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.cylinder,"rotor1", _view.quadBox) // EJsS HtmlView.HtmlView Page: declaration of element 'rotor1'
+      .setProperty("FillColor","Gray") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'rotor1'
+      .setProperty("SizeX",0.2) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'rotor1'
+      .setProperty("X",0.25) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'rotor1'
+      .setProperty("Y",0.25) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'rotor1'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'rotor1'
+      .setProperty("SizeZ",0.1) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'rotor1'
+      .setProperty("SizeY",0.2) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'rotor1'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.cylinder,"rotor2", _view.quadBox) // EJsS HtmlView.HtmlView Page: declaration of element 'rotor2'
+      .setProperty("FillColor","Gray") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'rotor2'
+      .setProperty("SizeX",0.2) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'rotor2'
+      .setProperty("X",-0.25) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'rotor2'
+      .setProperty("Y",0.25) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'rotor2'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'rotor2'
+      .setProperty("SizeZ",0.1) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'rotor2'
+      .setProperty("SizeY",0.2) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'rotor2'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.cylinder,"rotor4", _view.quadBox) // EJsS HtmlView.HtmlView Page: declaration of element 'rotor4'
+      .setProperty("FillColor","Gray") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'rotor4'
+      .setProperty("SizeX",0.2) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'rotor4'
+      .setProperty("X",-0.25) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'rotor4'
+      .setProperty("Y",-0.25) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'rotor4'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'rotor4'
+      .setProperty("SizeZ",0.1) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'rotor4'
+      .setProperty("SizeY",0.2) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'rotor4'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.cylinder,"rotor3", _view.quadBox) // EJsS HtmlView.HtmlView Page: declaration of element 'rotor3'
+      .setProperty("FillColor","Gray") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'rotor3'
+      .setProperty("SizeX",0.2) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'rotor3'
+      .setProperty("X",0.25) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'rotor3'
+      .setProperty("Y",-0.25) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'rotor3'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'rotor3'
+      .setProperty("SizeZ",0.1) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'rotor3'
+      .setProperty("SizeY",0.2) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'rotor3'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"plotPanel", _view.drawingPanels) // EJsS HtmlView.HtmlView Page: declaration of element 'plotPanel'
+      .setProperty("ClassName","d-flex flex-fill") // EJsS HtmlView.HtmlView Page: setting property 'ClassName' for element 'plotPanel'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"plottingPanelAnglesContainer", _view.plotPanel) // EJsS HtmlView.HtmlView Page: declaration of element 'plottingPanelAnglesContainer'
+      .setProperty("ClassName","d-flex flex-fill") // EJsS HtmlView.HtmlView Page: setting property 'ClassName' for element 'plottingPanelAnglesContainer'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.plottingPanel,"plottingPanelAngles", _view.plottingPanelAnglesContainer) // EJsS HtmlView.HtmlView Page: declaration of element 'plottingPanelAngles'
+      .setProperty("Height","100%") // EJsS HtmlView.HtmlView Page: setting property 'Height' for element 'plottingPanelAngles'
+      .setProperty("Width","100%") // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'plottingPanelAngles'
+      .setProperty("AutoScaleY",true) // EJsS HtmlView.HtmlView Page: setting property 'AutoScaleY' for element 'plottingPanelAngles'
+      .setProperty("AutoScaleX",true) // EJsS HtmlView.HtmlView Page: setting property 'AutoScaleX' for element 'plottingPanelAngles'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.trail,"rollTrail", _view.plottingPanelAngles) // EJsS HtmlView.HtmlView Page: declaration of element 'rollTrail'
+      .setProperty("LineColor","Red") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'rollTrail'
+      .setProperty("NoRepeat",true) // EJsS HtmlView.HtmlView Page: setting property 'NoRepeat' for element 'rollTrail'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.trail,"pitchTrail", _view.plottingPanelAngles) // EJsS HtmlView.HtmlView Page: declaration of element 'pitchTrail'
+      .setProperty("LineColor","Green") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'pitchTrail'
+      .setProperty("NoRepeat",true) // EJsS HtmlView.HtmlView Page: setting property 'NoRepeat' for element 'pitchTrail'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"plottingPanelXYposContainer", _view.plotPanel) // EJsS HtmlView.HtmlView Page: declaration of element 'plottingPanelXYposContainer'
+      .setProperty("ClassName","d-none flex-fill") // EJsS HtmlView.HtmlView Page: setting property 'ClassName' for element 'plottingPanelXYposContainer'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.plottingPanel,"plottingPanelXYpos", _view.plottingPanelXYposContainer) // EJsS HtmlView.HtmlView Page: declaration of element 'plottingPanelXYpos'
+      .setProperty("Height","100%") // EJsS HtmlView.HtmlView Page: setting property 'Height' for element 'plottingPanelXYpos'
+      .setProperty("Width","100%") // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'plottingPanelXYpos'
+      .setProperty("AutoScaleY",true) // EJsS HtmlView.HtmlView Page: setting property 'AutoScaleY' for element 'plottingPanelXYpos'
+      .setProperty("AutoScaleX",true) // EJsS HtmlView.HtmlView Page: setting property 'AutoScaleX' for element 'plottingPanelXYpos'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.trail,"xyPositionTrail", _view.plottingPanelXYpos) // EJsS HtmlView.HtmlView Page: declaration of element 'xyPositionTrail'
+      .setProperty("LineColor","rgba(0,0,255,0.5)") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'xyPositionTrail'
+      .setProperty("NoRepeat",true) // EJsS HtmlView.HtmlView Page: setting property 'NoRepeat' for element 'xyPositionTrail'
+      .setProperty("LineWidth",20) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'xyPositionTrail'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"controlPanel", _view.main) // EJsS HtmlView.HtmlView Page: declaration of element 'controlPanel'
+      .setProperty("ClassName","container") // EJsS HtmlView.HtmlView Page: setting property 'ClassName' for element 'controlPanel'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"selectModeAndRunPause", _view.controlPanel) // EJsS HtmlView.HtmlView Page: declaration of element 'selectModeAndRunPause'
+      .setProperty("ClassName","container d-flex flex-row justify-content-evenly align-items-center") // EJsS HtmlView.HtmlView Page: setting property 'ClassName' for element 'selectModeAndRunPause'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"selectMode", _view.selectModeAndRunPause) // EJsS HtmlView.HtmlView Page: declaration of element 'selectMode'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"selectModeLabel", _view.selectMode) // EJsS HtmlView.HtmlView Page: declaration of element 'selectModeLabel'
+      .setProperty("Text","Select handling  mode:") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'selectModeLabel'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.button,"manualButton", _view.selectMode) // EJsS HtmlView.HtmlView Page: declaration of element 'manualButton'
+      .setProperty("ClassName","btn btn-primary btn-sm mx-2") // EJsS HtmlView.HtmlView Page: setting property 'ClassName' for element 'manualButton'
+      .setProperty("Text","DIRECT") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'manualButton'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.button,"automaticButton", _view.selectMode) // EJsS HtmlView.HtmlView Page: declaration of element 'automaticButton'
+      .setProperty("ClassName","btn btn-primary btn-sm mx-2") // EJsS HtmlView.HtmlView Page: setting property 'ClassName' for element 'automaticButton'
+      .setProperty("Text","AUTO") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'automaticButton'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.button,"pathButton", _view.selectMode) // EJsS HtmlView.HtmlView Page: declaration of element 'pathButton'
+      .setProperty("ClassName","btn btn-primary btn-sm mx-2") // EJsS HtmlView.HtmlView Page: setting property 'ClassName' for element 'pathButton'
+      .setProperty("Text","SWEEP") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'pathButton'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"runPauseTime", _view.selectModeAndRunPause) // EJsS HtmlView.HtmlView Page: declaration of element 'runPauseTime'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.twoStateButton,"playPauseButton", _view.runPauseTime) // EJsS HtmlView.HtmlView Page: declaration of element 'playPauseButton'
+      .setProperty("TextOn","Run the animation") // EJsS HtmlView.HtmlView Page: setting property 'TextOn' for element 'playPauseButton'
+      .setProperty("TextOff","Pause the animation") // EJsS HtmlView.HtmlView Page: setting property 'TextOff' for element 'playPauseButton'
+      .setProperty("ClassName","btn btn-outline-success btn-sm mx-2") // EJsS HtmlView.HtmlView Page: setting property 'ClassName' for element 'playPauseButton'
+      .setProperty("ImageOnUrl","/org/opensourcephysics/resources/controls/images/play.gif") // EJsS HtmlView.HtmlView Page: setting property 'ImageOnUrl' for element 'playPauseButton'
+      .setProperty("ImageOffUrl","/org/opensourcephysics/resources/controls/images/pause.gif") // EJsS HtmlView.HtmlView Page: setting property 'ImageOffUrl' for element 'playPauseButton'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.button,"stepButton", _view.runPauseTime) // EJsS HtmlView.HtmlView Page: declaration of element 'stepButton'
+      .setProperty("ClassName","btn btn-outline-secondary btn-sm mx-2") // EJsS HtmlView.HtmlView Page: setting property 'ClassName' for element 'stepButton'
+      .setProperty("Text","Go one step") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'stepButton'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"controlsInputsAndSliders", _view.controlPanel) // EJsS HtmlView.HtmlView Page: declaration of element 'controlsInputsAndSliders'
+      .setProperty("ClassName","container d-flex flex-row justify-content-evenly") // EJsS HtmlView.HtmlView Page: setting property 'ClassName' for element 'controlsInputsAndSliders'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"controllersAndInputs", _view.controlsInputsAndSliders) // EJsS HtmlView.HtmlView Page: declaration of element 'controllersAndInputs'
+      .setProperty("ClassName","d-flex w-50") // EJsS HtmlView.HtmlView Page: setting property 'ClassName' for element 'controllersAndInputs'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"arrowControllers", _view.controllersAndInputs) // EJsS HtmlView.HtmlView Page: declaration of element 'arrowControllers'
+      .setProperty("ClassName","d-flex flex-row") // EJsS HtmlView.HtmlView Page: setting property 'ClassName' for element 'arrowControllers'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"leftControllersGroup", _view.arrowControllers) // EJsS HtmlView.HtmlView Page: declaration of element 'leftControllersGroup'
+      .setProperty("Height","150px") // EJsS HtmlView.HtmlView Page: setting property 'Height' for element 'leftControllersGroup'
+      .setProperty("Width","150px") // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'leftControllersGroup'
+      .setProperty("BoxShadow","0px 0px 5px grey") // EJsS HtmlView.HtmlView Page: setting property 'BoxShadow' for element 'leftControllersGroup'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"topRowControllersLeft", _view.leftControllersGroup) // EJsS HtmlView.HtmlView Page: declaration of element 'topRowControllersLeft'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.button,"throttleUp", _view.topRowControllersLeft) // EJsS HtmlView.HtmlView Page: declaration of element 'throttleUp'
+      .setProperty("Height","50px") // EJsS HtmlView.HtmlView Page: setting property 'Height' for element 'throttleUp'
+      .setProperty("Width","50px") // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'throttleUp'
+      .setProperty("ClassName","btn btn-outline-primary") // EJsS HtmlView.HtmlView Page: setting property 'ClassName' for element 'throttleUp'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"midRowControllersLeft", _view.leftControllersGroup) // EJsS HtmlView.HtmlView Page: declaration of element 'midRowControllersLeft'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.button,"yawLeft", _view.midRowControllersLeft) // EJsS HtmlView.HtmlView Page: declaration of element 'yawLeft'
+      .setProperty("Height","50px") // EJsS HtmlView.HtmlView Page: setting property 'Height' for element 'yawLeft'
+      .setProperty("Width","50px") // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'yawLeft'
+      .setProperty("CSS",{"margin-right": "25px"}) // EJsS HtmlView.HtmlView Page: setting property 'CSS' for element 'yawLeft'
+      .setProperty("ClassName","btn btn-outline-primary") // EJsS HtmlView.HtmlView Page: setting property 'ClassName' for element 'yawLeft'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.button,"yawRight", _view.midRowControllersLeft) // EJsS HtmlView.HtmlView Page: declaration of element 'yawRight'
+      .setProperty("Height","50px") // EJsS HtmlView.HtmlView Page: setting property 'Height' for element 'yawRight'
+      .setProperty("Width","50px") // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'yawRight'
+      .setProperty("CSS",{"margin-left": "25px"}) // EJsS HtmlView.HtmlView Page: setting property 'CSS' for element 'yawRight'
+      .setProperty("ClassName","btn btn-outline-primary") // EJsS HtmlView.HtmlView Page: setting property 'ClassName' for element 'yawRight'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"bottomRowControllersLeft", _view.leftControllersGroup) // EJsS HtmlView.HtmlView Page: declaration of element 'bottomRowControllersLeft'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.button,"throttleDown", _view.bottomRowControllersLeft) // EJsS HtmlView.HtmlView Page: declaration of element 'throttleDown'
+      .setProperty("Height","50px") // EJsS HtmlView.HtmlView Page: setting property 'Height' for element 'throttleDown'
+      .setProperty("Width","50px") // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'throttleDown'
+      .setProperty("ClassName","btn btn-outline-primary") // EJsS HtmlView.HtmlView Page: setting property 'ClassName' for element 'throttleDown'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"rightControllersGroup", _view.arrowControllers) // EJsS HtmlView.HtmlView Page: declaration of element 'rightControllersGroup'
+      .setProperty("Height","150px") // EJsS HtmlView.HtmlView Page: setting property 'Height' for element 'rightControllersGroup'
+      .setProperty("Width","150px") // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'rightControllersGroup'
+      .setProperty("BoxShadow","0px 0px 5px grey") // EJsS HtmlView.HtmlView Page: setting property 'BoxShadow' for element 'rightControllersGroup'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"topRowControllersRight", _view.rightControllersGroup) // EJsS HtmlView.HtmlView Page: declaration of element 'topRowControllersRight'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.button,"pitchUp", _view.topRowControllersRight) // EJsS HtmlView.HtmlView Page: declaration of element 'pitchUp'
+      .setProperty("Height","50px") // EJsS HtmlView.HtmlView Page: setting property 'Height' for element 'pitchUp'
+      .setProperty("Width","50px") // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'pitchUp'
+      .setProperty("ClassName","btn btn-outline-primary") // EJsS HtmlView.HtmlView Page: setting property 'ClassName' for element 'pitchUp'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"midRowControllersRight", _view.rightControllersGroup) // EJsS HtmlView.HtmlView Page: declaration of element 'midRowControllersRight'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.button,"rollLeft", _view.midRowControllersRight) // EJsS HtmlView.HtmlView Page: declaration of element 'rollLeft'
+      .setProperty("Height","50px") // EJsS HtmlView.HtmlView Page: setting property 'Height' for element 'rollLeft'
+      .setProperty("Width","50px") // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'rollLeft'
+      .setProperty("CSS",{"margin-right": "25px"}) // EJsS HtmlView.HtmlView Page: setting property 'CSS' for element 'rollLeft'
+      .setProperty("ClassName","btn btn-outline-primary") // EJsS HtmlView.HtmlView Page: setting property 'ClassName' for element 'rollLeft'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.button,"rollRight", _view.midRowControllersRight) // EJsS HtmlView.HtmlView Page: declaration of element 'rollRight'
+      .setProperty("Height","50px") // EJsS HtmlView.HtmlView Page: setting property 'Height' for element 'rollRight'
+      .setProperty("Width","50px") // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'rollRight'
+      .setProperty("CSS",{"margin-left": "25px"}) // EJsS HtmlView.HtmlView Page: setting property 'CSS' for element 'rollRight'
+      .setProperty("ClassName","btn btn-outline-primary") // EJsS HtmlView.HtmlView Page: setting property 'ClassName' for element 'rollRight'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"bottomRowControllersRight", _view.rightControllersGroup) // EJsS HtmlView.HtmlView Page: declaration of element 'bottomRowControllersRight'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.button,"pitchDown", _view.bottomRowControllersRight) // EJsS HtmlView.HtmlView Page: declaration of element 'pitchDown'
+      .setProperty("Height","50px") // EJsS HtmlView.HtmlView Page: setting property 'Height' for element 'pitchDown'
+      .setProperty("Width","50px") // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'pitchDown'
+      .setProperty("ClassName","btn btn-outline-primary") // EJsS HtmlView.HtmlView Page: setting property 'ClassName' for element 'pitchDown'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"inputCoordinates", _view.controllersAndInputs) // EJsS HtmlView.HtmlView Page: declaration of element 'inputCoordinates'
+      .setProperty("ClassName","d-none flex-column") // EJsS HtmlView.HtmlView Page: setting property 'ClassName' for element 'inputCoordinates'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"xCoordinateInput", _view.inputCoordinates) // EJsS HtmlView.HtmlView Page: declaration of element 'xCoordinateInput'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"xCoordinateInputLabel", _view.xCoordinateInput) // EJsS HtmlView.HtmlView Page: declaration of element 'xCoordinateInputLabel'
+      .setProperty("Text","x = ") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'xCoordinateInputLabel'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.numberField,"xCoordinateInputField", _view.xCoordinateInput) // EJsS HtmlView.HtmlView Page: declaration of element 'xCoordinateInputField'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"yCoordinateInput", _view.inputCoordinates) // EJsS HtmlView.HtmlView Page: declaration of element 'yCoordinateInput'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"yCoordinateInputLabel", _view.yCoordinateInput) // EJsS HtmlView.HtmlView Page: declaration of element 'yCoordinateInputLabel'
+      .setProperty("Text","y = ") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'yCoordinateInputLabel'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.numberField,"yCoordinateInputField", _view.yCoordinateInput) // EJsS HtmlView.HtmlView Page: declaration of element 'yCoordinateInputField'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"zCoordinateInput", _view.inputCoordinates) // EJsS HtmlView.HtmlView Page: declaration of element 'zCoordinateInput'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"zCoordinateInputLabel", _view.zCoordinateInput) // EJsS HtmlView.HtmlView Page: declaration of element 'zCoordinateInputLabel'
+      .setProperty("Text","z = ") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'zCoordinateInputLabel'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.numberField,"zCoordinateInputField", _view.zCoordinateInput) // EJsS HtmlView.HtmlView Page: declaration of element 'zCoordinateInputField'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.button,"goButton", _view.inputCoordinates) // EJsS HtmlView.HtmlView Page: declaration of element 'goButton'
+      .setProperty("Text","go!") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'goButton'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"zigZagSliders", _view.controllersAndInputs) // EJsS HtmlView.HtmlView Page: declaration of element 'zigZagSliders'
+      .setProperty("ClassName","d-none flex-column") // EJsS HtmlView.HtmlView Page: setting property 'ClassName' for element 'zigZagSliders'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"pathZigZagXContainer", _view.zigZagSliders) // EJsS HtmlView.HtmlView Page: declaration of element 'pathZigZagXContainer'
+      .setProperty("ClassName","d-flex flex-row") // EJsS HtmlView.HtmlView Page: setting property 'ClassName' for element 'pathZigZagXContainer'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"pathZigZagLabelX", _view.pathZigZagXContainer) // EJsS HtmlView.HtmlView Page: declaration of element 'pathZigZagLabelX'
+      .setProperty("Text","pathZigZagX = ") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'pathZigZagLabelX'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.slider,"pathZigZagSliderX", _view.pathZigZagXContainer) // EJsS HtmlView.HtmlView Page: declaration of element 'pathZigZagSliderX'
+      .setProperty("Minimum",0.1) // EJsS HtmlView.HtmlView Page: setting property 'Minimum' for element 'pathZigZagSliderX'
+      .setProperty("Maximum",3) // EJsS HtmlView.HtmlView Page: setting property 'Maximum' for element 'pathZigZagSliderX'
+      .setProperty("ShowText",true) // EJsS HtmlView.HtmlView Page: setting property 'ShowText' for element 'pathZigZagSliderX'
+      .setProperty("Format","0.0") // EJsS HtmlView.HtmlView Page: setting property 'Format' for element 'pathZigZagSliderX'
+      .setProperty("Step",0.1) // EJsS HtmlView.HtmlView Page: setting property 'Step' for element 'pathZigZagSliderX'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"pathZigZagYContainer", _view.zigZagSliders) // EJsS HtmlView.HtmlView Page: declaration of element 'pathZigZagYContainer'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"pathZigZagLabelY", _view.pathZigZagYContainer) // EJsS HtmlView.HtmlView Page: declaration of element 'pathZigZagLabelY'
+      .setProperty("Text","pathZigZagY = ") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'pathZigZagLabelY'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.slider,"pathZigZagSliderY", _view.pathZigZagYContainer) // EJsS HtmlView.HtmlView Page: declaration of element 'pathZigZagSliderY'
+      .setProperty("Minimum",0.1) // EJsS HtmlView.HtmlView Page: setting property 'Minimum' for element 'pathZigZagSliderY'
+      .setProperty("Maximum",6) // EJsS HtmlView.HtmlView Page: setting property 'Maximum' for element 'pathZigZagSliderY'
+      .setProperty("ShowText",true) // EJsS HtmlView.HtmlView Page: setting property 'ShowText' for element 'pathZigZagSliderY'
+      .setProperty("Format","0.0") // EJsS HtmlView.HtmlView Page: setting property 'Format' for element 'pathZigZagSliderY'
+      .setProperty("Step",0.1) // EJsS HtmlView.HtmlView Page: setting property 'Step' for element 'pathZigZagSliderY'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"pathZigZagZContainer", _view.zigZagSliders) // EJsS HtmlView.HtmlView Page: declaration of element 'pathZigZagZContainer'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"pathZigZagLabelZ", _view.pathZigZagZContainer) // EJsS HtmlView.HtmlView Page: declaration of element 'pathZigZagLabelZ'
+      .setProperty("Text","pathZigZagZ = ") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'pathZigZagLabelZ'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.slider,"pathZigZagSliderZ", _view.pathZigZagZContainer) // EJsS HtmlView.HtmlView Page: declaration of element 'pathZigZagSliderZ'
+      .setProperty("Minimum",0.1) // EJsS HtmlView.HtmlView Page: setting property 'Minimum' for element 'pathZigZagSliderZ'
+      .setProperty("Maximum",3) // EJsS HtmlView.HtmlView Page: setting property 'Maximum' for element 'pathZigZagSliderZ'
+      .setProperty("ShowText",true) // EJsS HtmlView.HtmlView Page: setting property 'ShowText' for element 'pathZigZagSliderZ'
+      .setProperty("Format","0.0") // EJsS HtmlView.HtmlView Page: setting property 'Format' for element 'pathZigZagSliderZ'
+      .setProperty("Step",0.1) // EJsS HtmlView.HtmlView Page: setting property 'Step' for element 'pathZigZagSliderZ'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"constantsFields", _view.controlsInputsAndSliders) // EJsS HtmlView.HtmlView Page: declaration of element 'constantsFields'
+      .setProperty("ClassName","d-flex flex-row") // EJsS HtmlView.HtmlView Page: setting property 'ClassName' for element 'constantsFields'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"PIDconstantsFields", _view.constantsFields) // EJsS HtmlView.HtmlView Page: declaration of element 'PIDconstantsFields'
+      .setProperty("ClassName","d-flex flex-column mx-2") // EJsS HtmlView.HtmlView Page: setting property 'ClassName' for element 'PIDconstantsFields'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"rollPitchConstantsLabel", _view.PIDconstantsFields) // EJsS HtmlView.HtmlView Page: declaration of element 'rollPitchConstantsLabel'
+      .setProperty("Text","Roll and Pitch PID control constants") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'rollPitchConstantsLabel'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"rollPitchConstants", _view.PIDconstantsFields) // EJsS HtmlView.HtmlView Page: declaration of element 'rollPitchConstants'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"KpLabel", _view.rollPitchConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'KpLabel'
+      .setProperty("Text","Kp = ") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'KpLabel'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.numberField,"KpField", _view.rollPitchConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'KpField'
+      .setProperty("Width",50) // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'KpField'
+      .setProperty("Format","##.#") // EJsS HtmlView.HtmlView Page: setting property 'Format' for element 'KpField'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"KiLabel", _view.rollPitchConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'KiLabel'
+      .setProperty("Text","Ki = ") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'KiLabel'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.numberField,"KiField", _view.rollPitchConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'KiField'
+      .setProperty("Width",50) // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'KiField'
+      .setProperty("Format","##.#") // EJsS HtmlView.HtmlView Page: setting property 'Format' for element 'KiField'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"KdLabel", _view.rollPitchConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'KdLabel'
+      .setProperty("Text","Kd = ") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'KdLabel'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.numberField,"KdField", _view.rollPitchConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'KdField'
+      .setProperty("Width",50) // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'KdField'
+      .setProperty("Format","##.#") // EJsS HtmlView.HtmlView Page: setting property 'Format' for element 'KdField'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"yawConstantsLabel", _view.PIDconstantsFields) // EJsS HtmlView.HtmlView Page: declaration of element 'yawConstantsLabel'
+      .setProperty("Text","Yaw PID control constants") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'yawConstantsLabel'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"yawConstants", _view.PIDconstantsFields) // EJsS HtmlView.HtmlView Page: declaration of element 'yawConstants'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"KpLabel2", _view.yawConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'KpLabel2'
+      .setProperty("Text","Kp = ") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'KpLabel2'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.numberField,"KpField2", _view.yawConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'KpField2'
+      .setProperty("Width",50) // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'KpField2'
+      .setProperty("Format","##.#") // EJsS HtmlView.HtmlView Page: setting property 'Format' for element 'KpField2'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"KiLabel2", _view.yawConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'KiLabel2'
+      .setProperty("Text","Ki = ") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'KiLabel2'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.numberField,"KiField2", _view.yawConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'KiField2'
+      .setProperty("Width",50) // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'KiField2'
+      .setProperty("Format","##.#") // EJsS HtmlView.HtmlView Page: setting property 'Format' for element 'KiField2'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"KdLabel2", _view.yawConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'KdLabel2'
+      .setProperty("Text","Kd = ") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'KdLabel2'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.numberField,"KdField2", _view.yawConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'KdField2'
+      .setProperty("Width",50) // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'KdField2'
+      .setProperty("Format","##.#") // EJsS HtmlView.HtmlView Page: setting property 'Format' for element 'KdField2'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"throttleConstantsLabel", _view.PIDconstantsFields) // EJsS HtmlView.HtmlView Page: declaration of element 'throttleConstantsLabel'
+      .setProperty("Text","Throttle PID control constants") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'throttleConstantsLabel'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"throttleConstants", _view.PIDconstantsFields) // EJsS HtmlView.HtmlView Page: declaration of element 'throttleConstants'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"KpLabel3", _view.throttleConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'KpLabel3'
+      .setProperty("Text","Kp = ") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'KpLabel3'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.numberField,"KpField3", _view.throttleConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'KpField3'
+      .setProperty("Width",50) // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'KpField3'
+      .setProperty("Format","##.#") // EJsS HtmlView.HtmlView Page: setting property 'Format' for element 'KpField3'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"KiLabel3", _view.throttleConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'KiLabel3'
+      .setProperty("Text","Ki = ") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'KiLabel3'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.numberField,"KiField3", _view.throttleConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'KiField3'
+      .setProperty("Width",50) // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'KiField3'
+      .setProperty("Format","##.#") // EJsS HtmlView.HtmlView Page: setting property 'Format' for element 'KiField3'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"KdLabel3", _view.throttleConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'KdLabel3'
+      .setProperty("Text","Kd = ") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'KdLabel3'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.numberField,"KdField3", _view.throttleConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'KdField3'
+      .setProperty("Width",50) // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'KdField3'
+      .setProperty("Format","##.#") // EJsS HtmlView.HtmlView Page: setting property 'Format' for element 'KdField3'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"droneConstantsFields", _view.constantsFields) // EJsS HtmlView.HtmlView Page: declaration of element 'droneConstantsFields'
+      .setProperty("ClassName","d-flex flex-column mx-2") // EJsS HtmlView.HtmlView Page: setting property 'ClassName' for element 'droneConstantsFields'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"massDistanceLabel", _view.droneConstantsFields) // EJsS HtmlView.HtmlView Page: declaration of element 'massDistanceLabel'
+      .setProperty("Text","Mass (total) and distance between rotors") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'massDistanceLabel'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"massDistanceConstants", _view.droneConstantsFields) // EJsS HtmlView.HtmlView Page: declaration of element 'massDistanceConstants'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"MLabel", _view.massDistanceConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'MLabel'
+      .setProperty("Text","M = ") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'MLabel'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.numberField,"MField", _view.massDistanceConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'MField'
+      .setProperty("Width",50) // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'MField'
+      .setProperty("Format","##.#") // EJsS HtmlView.HtmlView Page: setting property 'Format' for element 'MField'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"KiLabel4", _view.massDistanceConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'KiLabel4'
+      .setProperty("Text","d = ") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'KiLabel4'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.numberField,"KiField4", _view.massDistanceConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'KiField4'
+      .setProperty("Width",50) // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'KiField4'
+      .setProperty("Format","##.#") // EJsS HtmlView.HtmlView Page: setting property 'Format' for element 'KiField4'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"airThrustConstantsLabel", _view.droneConstantsFields) // EJsS HtmlView.HtmlView Page: declaration of element 'airThrustConstantsLabel'
+      .setProperty("Text","Air and thrust constants") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'airThrustConstantsLabel'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"airThrustConstants", _view.droneConstantsFields) // EJsS HtmlView.HtmlView Page: declaration of element 'airThrustConstants'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"KpLabel22", _view.airThrustConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'KpLabel22'
+      .setProperty("Text","Kthrust = ") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'KpLabel22'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.numberField,"KpField22", _view.airThrustConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'KpField22'
+      .setProperty("Width",50) // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'KpField22'
+      .setProperty("Format","##.#") // EJsS HtmlView.HtmlView Page: setting property 'Format' for element 'KpField22'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"KiLabel22", _view.airThrustConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'KiLabel22'
+      .setProperty("Text","Kairdrag = ") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'KiLabel22'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.numberField,"KiField22", _view.airThrustConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'KiField22'
+      .setProperty("Width",50) // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'KiField22'
+      .setProperty("Format","##.#") // EJsS HtmlView.HtmlView Page: setting property 'Format' for element 'KiField22'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"KdLabel22", _view.airThrustConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'KdLabel22'
+      .setProperty("Text","Kfriction = ") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'KdLabel22'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.numberField,"KdField22", _view.airThrustConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'KdField22'
+      .setProperty("Width",50) // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'KdField22'
+      .setProperty("Format","##.#") // EJsS HtmlView.HtmlView Page: setting property 'Format' for element 'KdField22'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"automaticMoveLabel", _view.droneConstantsFields) // EJsS HtmlView.HtmlView Page: declaration of element 'automaticMoveLabel'
+      .setProperty("Text","Automatic move constants") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'automaticMoveLabel'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"automaticMoveConstants", _view.droneConstantsFields) // EJsS HtmlView.HtmlView Page: declaration of element 'automaticMoveConstants'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"KpLabel32", _view.automaticMoveConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'KpLabel32'
+      .setProperty("Text","K1auto = ") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'KpLabel32'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.numberField,"KpField32", _view.automaticMoveConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'KpField32'
+      .setProperty("Width",50) // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'KpField32'
+      .setProperty("Format","##.#") // EJsS HtmlView.HtmlView Page: setting property 'Format' for element 'KpField32'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"KiLabel32", _view.automaticMoveConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'KiLabel32'
+      .setProperty("Text","K2auto = ") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'KiLabel32'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.numberField,"KiField32", _view.automaticMoveConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'KiField32'
+      .setProperty("Width",50) // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'KiField32'
+      .setProperty("Format","##.#") // EJsS HtmlView.HtmlView Page: setting property 'Format' for element 'KiField32'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"KdLabel32", _view.automaticMoveConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'KdLabel32'
+      .setProperty("Text","K3auto = ") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'KdLabel32'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.numberField,"KdField32", _view.automaticMoveConstants) // EJsS HtmlView.HtmlView Page: declaration of element 'KdField32'
+      .setProperty("Width",50) // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'KdField32'
+      .setProperty("Format","##.#") // EJsS HtmlView.HtmlView Page: setting property 'Format' for element 'KdField32'
+      ;
+
+  };
+
+  return _view;
+}
+
+
+//--><!]]></script>
+  </head>
+  <body>
+    <div role="button" id="_topFrame" style="text-align:center"></div>
+  <div id="metadata" class="metadata">
+    <br />
+    <div id="title_author">
+      <hr />
+      <b>Title and author:</b>
+      <p>
+      Quadrotor<br />
+      </p>
+      <p>
+ Manuel Sánchez González
+      </p>
+    </div>
+    <hr />
+    <p></p>
+    <div id="copyright_message">
+      <div class="cc_left"  style="float:left">&#169; 2022, Manuel Sánchez González. Compiled with EJS 6.01 (201013)
+</div>
+      <div class="cc_right" style="float:right">    Released under a <a rel="license" target="_blank" href="http://creativecommons.org/licenses/by-nc-sa/4.0/deed.en_US"> <img alt="Creative Commons Attribution-NonCommercial-ShareAlike" src="_ejs_library/images/cc_icon.png" /> </a> license.</div>
+    </div>
+  </div>
+    <script type="text/javascript"><!--//--><![CDATA[//><!--
+      var _model;
+      var _scorm;
+      window.addEventListener('load',
+        function () { 
+          _model =  new quadrotor("_topFrame","_ejs_library/",null);
+          if (typeof _isApp !== "undefined" && _isApp) _model.setRunAlways(true);
+          TextResizeDetector.TARGET_ELEMENT_ID = '_topFrame';
+          TextResizeDetector.USER_INIT_FUNC = function () {
+            var iBase = TextResizeDetector.addEventListener(function(e,args) {
+              _model._fontResized(args[0].iBase,args[0].iSize,args[0].iDelta);
+              },null);
+            _model._fontResized(iBase);
+          };
+          _model.onload();
+        }, false);
+    //--><!]]></script>
+  </body>
+</html>

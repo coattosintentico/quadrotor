@@ -1,0 +1,19 @@
+generated-with: Easy Java/Javascript Simulations, version 6.01, build 201013. Visit http://www.um.es/fem/Ejs
+title: Quadrotor
+logo-image: 
+author: Manuel Sánchez González
+copyright: 
+preferred-width: 800
+preferred-height: 600
+author-image: 
+source: quadrotor.ejss
+main-script: 
+main-simulation: quadrotor_Simulation.xhtml
+available-languages: 
+html-description: quadrotor_Intro_1.html
+html-contents: quadrotor_Contents.xhtml
+html-main: quadrotor.xhtml
+page-title: Intro Page
+page-index: quadrotor_Intro_1.html
+page-title: Quadrotor
+page-index: quadrotor_Simulation.xhtml
